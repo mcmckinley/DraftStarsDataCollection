@@ -22,7 +22,7 @@ const fs = require('fs');
 var clubTags = [];
 
 // Number of tags to request minus 1
-const NUM_TAGS_TO_REQUEST = 199;
+const NUM_TAGS_TO_REQUEST = 10;
 
 // Clear the player tag file
 fs.writeFile('./data/player_tags', '', (err) => {
