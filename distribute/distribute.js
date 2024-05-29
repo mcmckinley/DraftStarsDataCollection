@@ -47,7 +47,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
     for (var i = 0; i < allBattles.length; i++){
         const battle = allBattles[i];
 
-        // I made it this way so that it is easy to debug and modify which data is included.
+        // I made it this way so that it is easy to debug and modify data.
 
         var gameTime     = battle[0];
         var starPlayer   = battle[1];
@@ -60,7 +60,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
         var brawler5     = battle[8];
         var brawler6     = battle[9];
         var whichTeamWon = battle[10];
-
+        
         // If a key hasn't been created for a given mode or map, then create it
         if (!modes[mode]){
             modes[mode] = {};
@@ -131,8 +131,8 @@ function turnDataToArray(data) {
     var currentArray = [];
     var battleList = [];
     while (index < data.length) {
-      if (data[index] != ',') {
-        currentString+=data[index];
+      if (data[index] != ',' && data[index] != '\n') {
+        currentString += data[index];
       } else {
         currentArray.push(currentString);
         currentString = '';

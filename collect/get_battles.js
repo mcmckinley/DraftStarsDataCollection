@@ -9,15 +9,6 @@ require('dotenv').config();
 const API_KEY = process.env.API_KEY;
 
 
-// 1. 
-// Clear the battles_unfiltered file
-fs.writeFile('./data/battles_unfiltered.txt', '', (err) => {
-    if (err) {
-        console.log(err)
-    }
-})
-
-
 // Read the player tags file synchronously
 const unfilteredPlayerTags = fs.readFileSync('data/player_tags.txt', 'utf8');
 
@@ -26,56 +17,69 @@ const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !==
 
 // Modify the requests
 
+const SHOULD_RESET_FILE = true;
 const START_AT = 0;              // the player tag index at which ti begin requesting 
-const NUM_REQUESTS_TO_MAKE = 1;  // number of requests to make
-const MS_BETWEEN_REQUESTS = 1000; // milliseconds between requests
+const NUM_REQUESTS_TO_MAKE = 5;  // number of requests to make
+const MS_BETWEEN_REQUESTS = 700; // milliseconds between requests
 
-var index = START_AT;
+var index = START_AT - 1;
 var numRequestsMade = 0;
 
+if (SHOULD_RESET_FILE) {
+  fs.writeFile('./data/battles_unfiltered.txt', '', (err) => {
+    if (err) { console.log(err) }
+  })
+  fs.writeFile('./data/battle_log_information.txt', '', (err) => {
+    if (err) { console.log(err) }
+  })
+  console.log('Dataset cleared.')
+}
+
 var battleRequestInterval = setInterval(function() {
-   axios({
-      method: 'get',
-      url: `https://api.brawlstars.com/v1/players/%23${playerTags[index]}/battlelog`,
-      headers: {
-         'Authorization': `Bearer ${API_KEY}`
-      }
-   })
-   .then(response => {
-      console.log(`${index}`);
+  index++;
+  numRequestsMade++;
 
-      const currentPlayerTag = '#'+playerTags[index];
+  if (numRequestsMade == NUM_REQUESTS_TO_MAKE) {
+    console.log("Complete.");
+    clearInterval(battleRequestInterval);
+  }
 
-      // console.log("Reading battle log for player ", currentPlayerTag);
-        
-      appendDataToFile(convertBattleLogToData(response.data, currentPlayerTag), './data/battles_unfiltered.txt');
-        
-      index++;
-      numRequestsMade++;
+  axios({
+    method: 'get',
+    url: `https://api.brawlstars.com/v1/players/%23${playerTags[index]}/battlelog`,
+    headers: {
+       'Authorization': `Bearer ${API_KEY}`
+    }
+  })
+  .then(response => {
+    //console.log(`${index}`);
+    const playerTag = '#'+playerTags[index];
 
-      if (numRequestsMade == NUM_REQUESTS_TO_MAKE) {
-         console.log("Complete.");
-         clearInterval(battleRequestInterval);
-      }
+    var convertedData = convertBattleLogToData(response.data, playerTag);
+    appendDataToFile(convertedData.battles, './data/battles_unfiltered.txt');
+    appendDataToFile(convertedData.info, './data/battle_log_information.txt');
 
-   }).catch(error => {
-      console.log("Aborting due to error in requesting data:")
-      console.log(error.response.data)
-      clearInterval(battleRequestInterval);
-   }); 
+      
+  }).catch(error => {
+    console.log("ERROR");
+    console.error(error);
+    clearInterval(battleRequestInterval);
+  }); 
 }, MS_BETWEEN_REQUESTS);
 
 
 
-// Take a battleLog object and narrow it down into just the necessary data.
+// CONVERT BATTLE LOG TO DATA
 
-// battlelog - a JSON object that contains information on the battle
-// player - the tag of the player who's battle log we are requesting. this is used to identify duplicate battles.
+// arguments:
+//  - battlelog:           a json object representing a player's battle log.
+//  - playerTag (string): the player tag of the person whose battle log we are requesting (used to identify duplicates)
 
-function convertBattleLogToData(battlelog, player) {
-  // this full string will be returned.
-  var string = "";
+// returns an object with two keys:
+//  - battles (string):  
+//  - info (strings)
 
+function convertBattleLogToData(battlelog, playerTag) {
   var battles = [];
 
   // the first or second match may have no star player, due to the nature of power league.
@@ -91,6 +95,7 @@ function convertBattleLogToData(battlelog, player) {
     }
   }
 
+  // iterate over each match in the battle log
   for (var i = startIndex; i < battlelog.items.length; i++) {
     // 1 - the type must be ranked, soloRanked, teamRanked
     const match = battlelog.items[i];
@@ -109,7 +114,6 @@ function convertBattleLogToData(battlelog, player) {
       !match.event.map,
       match.battle.result == "draw",
     ];
-    //console.log(typeof match.battle.teams)
 
     // Sometimes the teams property is undefined. Not sure why. Either way,
     //    this match is irrelevant to us.
@@ -118,19 +122,13 @@ function convertBattleLogToData(battlelog, player) {
       continue;
     }
 
-    //response.data.items[3].battle.teams[0].length
-
-    var fail = false;
-
-    for (var f = 0; f < failConditions.length; f++) {
-      if (failConditions[f] == true) {
-        fail = true;
-      }
-    }
+    // if any of the conditions fail, skip to the next battle
+    var fail = failConditions.some(condition => condition === true);
 
     if (fail) {
       continue;
     }
+
 
     // Ignore the match if it is too low trophies.
     if (matchType == "ranked") {
@@ -146,17 +144,15 @@ function convertBattleLogToData(battlelog, player) {
       }
 
       if (highestTrophies < 600) {
-        //console.log(`battle ${i} insufficient trophies`);
         continue;
       }
     }
 
-   // necessary to later identify duplicate battles. these have to carry over
-   // between iterations, because not all battles have star players (ranked mode.)
-   var starPlayer;
+    // necessary to later identify duplicate battles. these have to carry over
+    // between iterations, because not all battles have star players (ranked mode.)
+    var starPlayer;
     // Determine star player (same as previous if null)
     if (match.battle.starPlayer) {
-      
       starPlayer = match.battle.starPlayer.tag;
     }
 
@@ -165,7 +161,7 @@ function convertBattleLogToData(battlelog, player) {
     const teamOnRight = match.battle.teams[1];
 
     const playerDidWin = (match.battle.result == "victory");
-    const playerIsOnRight = (teamOnRight[0].tag == player || teamOnRight[1].tag == player || teamOnRight[2].tag == player);
+    const playerIsOnRight = (teamOnRight[0].tag == playerTag || teamOnRight[1].tag == playerTag || teamOnRight[2].tag == playerTag);
 
     var teamOnRightDidWin = (playerDidWin == playerIsOnRight);
     
@@ -195,22 +191,27 @@ function convertBattleLogToData(battlelog, player) {
       ].join(",")
     ); 
   }
-
-  // Once all the battles are added, join them with newlines
+  
   if (battles.length == 0) {
-    return "";
+    return {
+      battles: '',
+      info: index + ' ' + playerTag + ': 0 battles\n'
+    };
   } else {
-    return battles.join(',');
+    return { 
+      battles: battles.join('\n') + '\n',
+      info: index + ' ' + playerTag + ': ' + battles.length + ' battles\n'
+    };
   }
 }
 
 
 
 function appendDataToFile(data, file){
-    fs.appendFile(file, data, 'utf8', (err) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-    });
-  }
+  fs.appendFile(file, data, 'utf8', (err) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+  });
+}
