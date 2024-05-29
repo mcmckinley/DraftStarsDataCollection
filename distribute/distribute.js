@@ -27,6 +27,8 @@ function printCheckpoint(message){
     startOfInterval = endOfInterval;
 }
 
+// clear the info file
+fs.writeFile('data/total_battles_logged.txt', '', (err) => {});
 
 fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
     if (err){
@@ -60,7 +62,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
         var brawler5     = battle[8];
         var brawler6     = battle[9];
         var whichTeamWon = battle[10];
-        
+
         // If a key hasn't been created for a given mode or map, then create it
         if (!modes[mode]){
             modes[mode] = {};
@@ -88,6 +90,9 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
 
     const mainDirectory = "data/battles";
 
+    // this is added to data/total_battles_logged.txt. this file tells you how many battles are logged for each map.
+    var battleInfoText = '';
+
     // 3. Write the data to the files
     for (mode in modes){
         if (modes.hasOwnProperty(mode)){
@@ -101,15 +106,31 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
                 }
             });
 
+            battleInfoText += mode + '\n';
+
             for (map in modes[mode]){
                 if (modes[mode].hasOwnProperty(map)){
                     const file = path.join(subdirectory, map);
                     fs.writeFile(file, modes[mode][map].join(), (err) => {});
+
+                    var numberOfBattlesForMap = modes[mode][map].length;
+
+                    battleInfoText += ' - ' + map + ': ' + numberOfBattlesForMap + '\n';
                 }
             }
         }
     }
+    appendTextToFile(battleInfoText, 'data/total_battles_logged.txt')
 })
+
+function appendTextToFile(data, file){
+    fs.appendFile(file, data, 'utf8', (err) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+    });
+  }
 
 // takes a battle log (unfiltered string) and parses it into a 2d array.
 // this function returns battleList, where each index is a battle.

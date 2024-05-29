@@ -29,7 +29,7 @@ if (SHOULD_RESET_FILE) {
   fs.writeFile('./data/battles_unfiltered.txt', '', (err) => {
     if (err) { console.log(err) }
   })
-  fs.writeFile('./data/battle_log_information.txt', '', (err) => {
+  fs.writeFile('./data/unfiltered_battle_log_information.txt', '', (err) => {
     if (err) { console.log(err) }
   })
   console.log('Dataset cleared.')
@@ -56,8 +56,8 @@ var battleRequestInterval = setInterval(function() {
     const playerTag = '#'+playerTags[index];
 
     var convertedData = convertBattleLogToData(response.data, playerTag);
-    appendDataToFile(convertedData.battles, './data/battles_unfiltered.txt');
-    appendDataToFile(convertedData.info, './data/battle_log_information.txt');
+    appendTextToFile(convertedData.battles, './data/battles_unfiltered.txt');
+    appendTextToFile(convertedData.info, './data/unfiltered_battle_log_information.txt');
 
       
   }).catch(error => {
@@ -207,7 +207,7 @@ function convertBattleLogToData(battlelog, playerTag) {
 
 
 
-function appendDataToFile(data, file){
+function appendTextToFile(data, file){
   fs.appendFile(file, data, 'utf8', (err) => {
     if (err) {
       console.error(err);
