@@ -25,7 +25,7 @@ var clubTags = [];
 const NUM_TAGS_TO_REQUEST = 10;
 
 // Clear the player tag file
-fs.writeFile('./data/player_tags', '', (err) => {
+fs.writeFile('./data/player_tags.txt', '', (err) => {
     if (err) {
         console.log('Could not clear file.')
     } else {

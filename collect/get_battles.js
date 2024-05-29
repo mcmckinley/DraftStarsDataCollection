@@ -11,17 +11,15 @@ const API_KEY = process.env.API_KEY;
 
 // 1. 
 // Clear the battles_unfiltered file
-fs.writeFile('./data/battles_unfiltered', '', (err) => {
+fs.writeFile('./data/battles_unfiltered.txt', '', (err) => {
     if (err) {
-        console.log('Could not clear file.')
-    } else {
-        console.log('data/battles_unfiltered file reset.')
+        console.log(err)
     }
 })
 
 
 // Read the player tags file synchronously
-const unfilteredPlayerTags = fs.readFileSync('./data/player_tags', 'utf8');
+const unfilteredPlayerTags = fs.readFileSync('data/player_tags.txt', 'utf8');
 
 // Split the file contents into an array of player tags
 const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !== '');
@@ -50,7 +48,7 @@ var battleRequestInterval = setInterval(function() {
 
       // console.log("Reading battle log for player ", currentPlayerTag);
         
-      appendDataToFile(convertBattleLogToData(response.data, currentPlayerTag), './data/battles_unfiltered');
+      appendDataToFile(convertBattleLogToData(response.data, currentPlayerTag), './data/battles_unfiltered.txt');
         
       index++;
       numRequestsMade++;
@@ -75,7 +73,6 @@ var battleRequestInterval = setInterval(function() {
 // player - the tag of the player who's battle log we are requesting. this is used to identify duplicate battles.
 
 function convertBattleLogToData(battlelog, player) {
-   console.log('in function: ', player)
   // this full string will be returned.
   var string = "";
 
@@ -194,8 +191,7 @@ function convertBattleLogToData(battlelog, player) {
         teamOnRight[1].brawler.name,    //           on the right team
         teamOnRight[2].brawler.name,
 
-        teamOnRightDidWin ? 1 : 0,      // 10 - 0 if the left team won.
-                                        //      1 if the right team won.
+        teamOnRightDidWin ? 'right' : 'left',   // 10 - whether left or right won.
       ].join(",")
     ); 
   }
@@ -204,7 +200,7 @@ function convertBattleLogToData(battlelog, player) {
   if (battles.length == 0) {
     return "";
   } else {
-    return battles.join("\n") + "\n";
+    return battles.join(',');
   }
 }
 
