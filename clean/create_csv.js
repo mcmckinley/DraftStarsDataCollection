@@ -11,7 +11,6 @@
 // It creates a CSV file which pytorch can read.
 // -----
 
-
 const fs = require("fs"); // file i/o
 
 
@@ -128,7 +127,7 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   // 2. Remove duplicates from the array.
   var allBattles = removeDuplicates(allBattlesUnfiltered);
   printCheckpoint("Removed duplicates");
-  console.log(`${allBattles.length} unique battles`);
+  console.log(` -> Found ${allBattles.length} unique battles`);
 
   // 3. Write the CSV header
   var fileHeader = '';
@@ -151,18 +150,13 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   const lengthOfDataArray = (brawlers.length * 2) + maps.length + 1;
   const emptyDataArray = new Array(lengthOfDataArray).fill(0);
 
-  // for (var i = 0; i < allBattles.length; i++) {
-  for (var i = 0; i < 1; i++) {
+  var allBattleArrays = [];
 
+  for (var i = 0; i < allBattles.length; i++) {
     // 1. Boolean array
     const battle = allBattles[i];
 
     var battleDataArray = emptyDataArray.slice();
-
-    // console.log(mapToIndex);
-
-    // console.log('EMPTY DATA ARR:')
-    // console.log(battleDataArray.join(','))
 
     // 2. Modfy the bool array: 1's where the value is true
 
@@ -183,23 +177,20 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] = 1;
     battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] = 1;
 
-    // console.log(leftBrawler1 + ' at index ' +  getBrawlerIndex(leftBrawler1));
-    // console.log(leftBrawler2 + ' at index ' +  getBrawlerIndex(leftBrawler2));
-    // console.log(leftBrawler3 + ' at index ' +  getBrawlerIndex(leftBrawler3));
-    // console.log(rightBrawler1 + ' at index ' +  getBrawlerIndex(rightBrawler1));
-    // console.log(rightBrawler2 + ' at index ' +  getBrawlerIndex(rightBrawler2));
-    // console.log(rightBrawler3 + ' at index ' +  getBrawlerIndex(rightBrawler3));
-    // console.log( map + ' at index ' + getMapIndex(map));
-
     battleDataArray[getMapIndex(map) + brawlers.length * 2] = 1;
     battleDataArray[battleDataArray.length - 1] = (teamThatWon == 'right' ? 1 : 0);
 
-    // console.log('POPULATED DATA ARR:')
-    // console.log(battleDataArray.join(','))
-
-    appendTextToFile('"' + battleDataArray.join('","') + '"\n', 'data/battles.csv')
-
+    allBattleArrays.push('"' + battleDataArray.join('","') + '"')
   }
+
+  fs.appendFile('data/battles.csv', allBattleArrays.join('\n'), (err) => {
+    if (err) {
+      console.error(err); 
+      return;
+    }
+  })
+  
+  printCheckpoint('Wrote data to battles.csv');
 });
 
 function appendTextToFile(data, file){

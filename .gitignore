@@ -6,6 +6,7 @@ package.json
 
 # ignore the datafiles due to large sizes
 data/*.txt
+data/*.csv
 
 data/battles/*
 
