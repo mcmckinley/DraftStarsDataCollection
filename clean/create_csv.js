@@ -1,149 +1,202 @@
 // create_csv.js
 // Michael McKinley
 
-// ----- 
+
+// BEFORE USING:
+// Make sure to run:
+//    $ node clean/distribute.js
+
+// -----
 // The objective of this program is to take the data we have and make it interpretable for a nueral network.
 // It creates a CSV file which pytorch can read.
 // -----
 
-const fs = require('fs');       // file i/o
 
-function createBrawlerIDMap(){
-    const brawlerIDMap = new Map([
-        ['SHELLY',0],
-        ['COLT',1],
-        ['BULL',2],
-        ['BROCK',3],
-        ['RICO',4],
-        ['SPIKE',5],
-        ['BARLEY',6],
-        ['JESSIE',7],
-        ['NITA',8],
-        ['DYNAMIKE',9],
-        ['EL PRIMO',10],
-        ['MORTIS',11],
-        ['CROW',12],
-        ['POCO',13],
-        ['BO',14],
-        ['PIPER',15],
-        ['PAM',16],
-        ['TARA',17],
-        ['DARRYL',18],
-        ['PENNY',19],
-        ['FRANK',20],
-        ['GENE',21],
-        ['TICK',22],
-        ['LEON',23],
-        ['ROSA',24],
-        ['CARL',25],
-        ['BIBI',26],
-        ['8-BIT',27],
-        ['SANDY',28],
-        ['BEA',29],
-        ['EMZ',30],
-        ['MR. P',31],
-        ['MAX',32],
-        ['JACKY',33],
-        ['GALE',34],
-        ['NANI',35],
-        ['SPROUT',36],
-        ['SURGE',37],
-        ['COLETTE',38],
-        ['AMBER',39],
-        ['LOU',40],
-        ['BYRON',41],
-        ['EDGAR',42],
-        ['RUFFS',43],
-        ['STU',44],
-        ['BELLE',45],
-        ['SQUEAK',46],
-        ['GROM',47],
-        ['BUZZ',48],
-        ['GRIFF',49],
-        ['ASH',50],
-        ['MEG',51],
-        ['LOLA',52],
-        ['FANG',53],
-        ['EVE',54],
-        ['JANET',55],
-        ['BONNIE',56],
-        ['OTIS',57],
-        ['SAM',58],
-        ['GUS',59],
-        ['BUSTER',60],
-        ['CHESTER',61],
-        ['GRAY',62],
-        ['MANDY',63],
-        ['R-T',64],
-        ['WILLOW',65],
-        ['MAISIE',66],
-        ['HANK',67],
-        ['CORDELIUS',68],
-        ['DOUG',69],
-        ['PEARL',70],
-        ['CHUCK',71],
-        ['CHARLIE',72],
-        ['MICO',73],
-        ['KIT',74],
-        ['LARRY & LAWRIE',75],
-        ['MELODY',76],
-        ['ANGELO',77],
-        ['DRACO',78],
-        ['LILY',79]
-    ]);
-    return brawlerIDMap;
-}
-
-const brawlerIDMap = createBrawlerIDMap();
-
-// Input a brawler name, return its index, 
-// e.g. 'SHELLY' returns 0, 'COLT' returns 1... 
-function nameToIndex(name){
-    return brawlerIDMap.get(name);
-}
+const fs = require("fs"); // file i/o
 
 
-// pass in an array of string arrays
-function removeDuplicates(array) {
-    const uniqueStrings = new Set(array.map(subArray => JSON.stringify(subArray)));
-    return Array.from(uniqueStrings).map(str => JSON.parse(str));
-}
+// I. Index functions
 
-// Use this to mark time between two points.
-var startOfInterval = new Date();
 
-function printCheckpoint(message){
-    const endOfInterval = new Date();
-    const durationOfInterval = ((endOfInterval-startOfInterval)/1000).toFixed(3);
+// 1  - Arrays of brawlers and maps
+var brawlers = ['SHELLY', 'COLT', 'BULL', 'BROCK', 'RICO', 'SPIKE', 'BARLEY', 'JESSIE', 'NITA', 'DYNAMIKE', 'EL PRIMO', 'MORTIS', 'CROW', 'POCO', 'BO', 'PIPER', 'PAM', 'TARA', 'DARRYL', 'PENNY', 'FRANK', 'GENE', 'TICK', 'LEON', 'ROSA', 'CARL', 'BIBI', '8-BIT', 'SANDY', 'BEA', 'EMZ', 'MR. P', 'MAX', 'JACKY', 'GALE', 'NANI', 'SPROUT', 'SURGE', 'COLETTE', 'AMBER', 'LOU', 'BYRON', 'EDGAR', 'RUFFS', 'STU', 'BELLE', 'SQUEAK', 'GROM', 'BUZZ', 'GRIFF', 'ASH', 'MEG', 'LOLA', 'FANG', 'EVE', 'JANET', 'BONNIE', 'OTIS', 'SAM', 'GUS', 'BUSTER', 'CHESTER', 'GRAY', 'MANDY', 'R-T', 'WILLOW', 'MAISIE', 'HANK', 'CORDELIUS', 'DOUG', 'PEARL', 'CHUCK', 'CHARLIE', 'MICO', 'KIT', 'LARRY & LAWRIE', 'MELODY', 'ANGELO', 'DRACO', 'LILY']
+var maps = []; 
 
-    console.log(message, durationOfInterval, "s")
-    startOfInterval = endOfInterval;
-}
+// 2 - Dictionaries of brawlers and maps
+var brawlerToIndex = {};
+var mapToIndex = {};
 
-var pathToBattleLog = 'data/battles.txt';
+// 3.1 - Populating the brawlers dictionary is easy
+brawlers.forEach((brawler, index) => {
+  brawlerToIndex[brawler] = index;
+});
 
-fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
-    if (err){
-        console.error(err);
-        return;
+// 3.2 - Populating the maps dictionary is a little harder: we have to 
+//        read the maps in first. For this we use the battles_info file.
+fs.readFile("data/battles_info.txt", "utf8", (err, data) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+
+  var index = 0;
+  var currentString = "";
+
+  while (index < data.length) {
+    if (data[index] == "-") {         // find dash character
+      index += 2;                     // ignore the space that follows
+      while (data[index] != ":") {
+        currentString += data[index]; // add the string
+        index++;
+      }
+      maps.push(currentString);
+      currentString = '';
     }
-    printCheckpoint('File has been read');
+    index++;
+  }
 
-    // 1. Organize the rougb data into an array.
-    var allBattlesUnfiltered = turnDataToArray(data);
-    printCheckpoint('Data sorted into array');
-
-    console.log(` - before removing dupes: ${allBattlesUnfiltered.length} battles`)
-
-    // 2. Remove duplicates from the array.
-    var allBattles = removeDuplicates(allBattlesUnfiltered);
-    printCheckpoint('Removed duplicates')
-    console.log(` - after removing dupes: ${allBattles.length} battles`)
-
-    // 3. 
-
+  maps.forEach((map, index) => {
+    mapToIndex[map] = index;
+  });
 
 });
+
+// 4 - Index functions
+
+// input: (string) a brawler name, or a map name
+// return: (integer) the index in the final array (what the neural network takes as input) 
+//                   that the brawler or map corresponds to.
+function getBrawlerIndex(name) {
+  return brawlerToIndex[name];
+}
+
+function getMapIndex(name) {
+  return mapToIndex[name];
+}
+
+
+// II. Helper functions
+
+
+// remove duplicates
+// Takes an array of string arrays
+// Removes duplicates and returns
+function removeDuplicates(array) {
+  const uniqueStrings = new Set(
+    array.map((subArray) => JSON.stringify(subArray)),
+  );
+  return Array.from(uniqueStrings).map((str) => JSON.parse(str));
+}
+
+// print checkpoint
+// Marks how long it took to preform a specific action. 
+// Each time you printCheckpoint, it resets the timer.
+var startOfInterval = new Date();
+
+function printCheckpoint(message) {
+  const endOfInterval = new Date();
+  const durationOfInterval = ((endOfInterval - startOfInterval) / 1000).toFixed(3);
+
+  console.log(message, durationOfInterval, "s");
+  startOfInterval = endOfInterval;
+}
+
+
+// III. Reading the datafile
+
+// 1. Clear the CSV file
+fs.writeFile('data/battles.csv', '', (err) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+});
+
+fs.readFile("data/battles.txt", "utf8", (err, data) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+  printCheckpoint("File has been read");
+
+  // 1. Organize the rougb data into an array.
+  var allBattlesUnfiltered = turnDataToArray(data);
+  printCheckpoint("Data sorted into array");
+
+  // console.log(`${allBattlesUnfiltered.length} total battles`)
+
+  // 2. Remove duplicates from the array.
+  var allBattles = removeDuplicates(allBattlesUnfiltered);
+  printCheckpoint("Removed duplicates");
+  console.log(`${allBattles.length} unique battles`);
+
+  // 3. Write the CSV header
+  var fileHeader = '';
+  // left brawlers
+  for (var i = 0; i < brawlers.length; i++){
+    fileHeader += '"' + brawlers[i] + '_LEFT",';
+  }
+  // right brawlers
+  for (var i = 0; i < brawlers.length; i++){
+    fileHeader += '"' + brawlers[i] + '_RIGHT",';
+  }
+  // maps
+  for (var i = 0; i < maps.length; i++){
+    fileHeader += '"' + maps[i] + '",';
+  }
+  fileHeader += '"DID TEAM ON RIGHT WIN?"\n';
+  appendTextToFile(fileHeader, 'data/battles.csv');
+
+  // initialize blank data array
+  const lengthOfDataArray = (brawlers.length * 2) + maps.length;
+  const emptyDataArray = new Array(lengthOfDataArray).fill(0);
+
+  // for (var i = 0; i < allBattles.length; i++) {
+  for (var i = 0; i < 1; i++) {
+
+    // 1. Boolean array
+    const battle = allBattles[i];
+
+    var battleDataArray = emptyDataArray.slice();
+
+
+    // 2. Modfy the bool array: 1's where the value is true
+
+    var leftBrawler1 =  battle[4];
+    var leftBrawler2 =  battle[5];
+    var leftBrawler3 =  battle[6];
+    var rightBrawler1 = battle[7];
+    var rightBrawler2 = battle[8];
+    var rightBrawler3 = battle[9];
+    var map = battle[3];
+    var teamThatWon =   battle[10];
+    
+    battleDataArray[getBrawlerIndex(leftBrawler1)] = 1;
+    battleDataArray[getBrawlerIndex(leftBrawler2)] = 1;
+    battleDataArray[getBrawlerIndex(leftBrawler3)] = 1;
+
+    battleDataArray[getBrawlerIndex(rightBrawler1) + brawlers.length] = 1;
+    battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] = 1;
+    battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] = 1;
+
+    battleDataArray[getMapIndex(map)] = 1;
+    battleDataArray[battleDataArray.length - 1] = (teamThatWon == 'right' ? 1 : 0);
+
+    appendTextToFile('"' + battleDataArray.join('","') + '"\n', 'data/battles.csv')
+
+  }
+});
+
+function appendTextToFile(data, file){
+  fs.appendFile(file, data, 'utf8', (err) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+  });
+}
+
+
 
 // takes a battle log (unfiltered string) and parses it into a 2d array.
 // this function returns battleList (array of string arrays), where each index is a battle.
@@ -158,24 +211,24 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
 //       10 - which team won  (left or right)
 
 function turnDataToArray(data) {
-    // 1. Read the raw data and produce arrays to represent it.
-    var index = 0;
-    var currentString = '';
-    var currentArray = [];
-    var battleList = [];
-    while (index < data.length) {
-      if (data[index] != ',' && data[index] != '\n') {
-        currentString += data[index];
-      } else {
-        currentArray.push(currentString);
-        currentString = '';
-        if (currentArray.length == 11) { 
-          battleList.push(currentArray);
-          currentArray = [];
-        }
+  // 1. Read the raw data and produce arrays to represent it.
+  var index = 0;
+  var currentString = "";
+  var currentArray = [];
+  var battleList = [];
+  while (index < data.length) {
+    if (data[index] != "," && data[index] != "\n") {
+      currentString += data[index];
+    } else {
+      currentArray.push(currentString);
+      currentString = "";
+      if (currentArray.length == 11) {
+        battleList.push(currentArray);
+        currentArray = [];
       }
-    index++;
     }
-    
-    return battleList;
+    index++;
+  }
+
+  return battleList;
 }

@@ -126,13 +126,13 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
 })
 
 function appendTextToFile(data, file){
-    fs.appendFile(file, data, 'utf8', (err) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-    });
-  }
+  fs.appendFile(file, data, 'utf8', (err) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+  });
+}
 
 // takes a battle log (unfiltered string) and parses it into a 2d array.
 // this function returns battleList, where each index is a battle.
