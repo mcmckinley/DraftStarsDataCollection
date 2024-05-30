@@ -148,7 +148,7 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   appendTextToFile(fileHeader, 'data/battles.csv');
 
   // initialize blank data array
-  const lengthOfDataArray = (brawlers.length * 2) + maps.length;
+  const lengthOfDataArray = (brawlers.length * 2) + maps.length + 1;
   const emptyDataArray = new Array(lengthOfDataArray).fill(0);
 
   // for (var i = 0; i < allBattles.length; i++) {
@@ -159,6 +159,10 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
 
     var battleDataArray = emptyDataArray.slice();
 
+    // console.log(mapToIndex);
+
+    // console.log('EMPTY DATA ARR:')
+    // console.log(battleDataArray.join(','))
 
     // 2. Modfy the bool array: 1's where the value is true
 
@@ -179,8 +183,19 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] = 1;
     battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] = 1;
 
-    battleDataArray[getMapIndex(map)] = 1;
+    // console.log(leftBrawler1 + ' at index ' +  getBrawlerIndex(leftBrawler1));
+    // console.log(leftBrawler2 + ' at index ' +  getBrawlerIndex(leftBrawler2));
+    // console.log(leftBrawler3 + ' at index ' +  getBrawlerIndex(leftBrawler3));
+    // console.log(rightBrawler1 + ' at index ' +  getBrawlerIndex(rightBrawler1));
+    // console.log(rightBrawler2 + ' at index ' +  getBrawlerIndex(rightBrawler2));
+    // console.log(rightBrawler3 + ' at index ' +  getBrawlerIndex(rightBrawler3));
+    // console.log( map + ' at index ' + getMapIndex(map));
+
+    battleDataArray[getMapIndex(map) + brawlers.length * 2] = 1;
     battleDataArray[battleDataArray.length - 1] = (teamThatWon == 'right' ? 1 : 0);
+
+    // console.log('POPULATED DATA ARR:')
+    // console.log(battleDataArray.join(','))
 
     appendTextToFile('"' + battleDataArray.join('","') + '"\n', 'data/battles.csv')
 
