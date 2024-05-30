@@ -1,7 +1,11 @@
-// player_tags.js
+// collect/player_tags.js
+// Michael McKinley
 
-// Requests player tags from the top 200 clubs globally.
-// - Each club has 30 players, so this program collects up to 6,000 player tags.
+// ----
+//  Creates a list of player tags.
+//  a) requests the club leaderboard (tags of top 200 clubs)
+//  b) requests member lists from all clubs (200 clubs * 30 players == 6000 players)
+//  ----
 
 
 // Run a local server with express
@@ -21,8 +25,8 @@ const fs = require('fs');
 // Array of club tags
 var clubTags = [];
 
-// Number of tags to request minus 1
-const NUM_TAGS_TO_REQUEST = 10;
+// MAX 6000
+const NUM_CLUBS_TO_REQUEST_FROM = 200;
 
 // Clear the player tag file
 fs.writeFile('./data/player_tags.txt', '', (err) => {
@@ -70,7 +74,7 @@ axios({
             for (var i = 0; i < data.items.length; i++){
                 const tag = data.items[i].tag.slice(1);
                 
-                fs.appendFile('./data/player_tags', tag +'\n', (err) => {
+                fs.appendFile('./data/player_tags.txt', tag +'\n', (err) => {
                     if (err) {
                         console.log('error adding tag to file');
                     }
@@ -82,7 +86,7 @@ axios({
         })
 
         clubIndex++;        
-        if (clubIndex == NUM_TAGS_TO_REQUEST){
+        if (clubIndex == NUM_CLUBS_TO_REQUEST_FROM){
             clearInterval(intervalID);
             console.log('Success.');
         }

@@ -1,6 +1,11 @@
 // collect/get_battles.js
 // Michael McKinley
 
+// ----
+// Collects a list of battles.
+// Requires the data/player_tags.txt file to be populated by collect/get_battles.txt
+// ----
+
 const axios = require('axios'); // API calls
 const fs = require('fs');       // File reading
 
@@ -17,13 +22,11 @@ const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !==
 
 // Modify the requests
 
-const SHOULD_RESET_FILE = true;
-const START_AT = 0;              // the player tag index at which ti begin requesting 
-const NUM_REQUESTS_TO_MAKE = 5;  // number of requests to make
-const MS_BETWEEN_REQUESTS = 700; // milliseconds between requests
+const SHOULD_RESET_FILE = false;
+const START_AT = 4010;              // the player tag index at which ti begin requesting 
+const NUM_REQUESTS_TO_MAKE = 1990;  // number of requests to make
+const MS_BETWEEN_REQUESTS = 500; // milliseconds between requests
 
-var index = START_AT - 1;
-var numRequestsMade = 0;
 
 if (SHOULD_RESET_FILE) {
   fs.writeFile('./data/battles_unfiltered.txt', '', (err) => {
@@ -35,7 +38,14 @@ if (SHOULD_RESET_FILE) {
   console.log('Dataset cleared.')
 }
 
-var battleRequestInterval = setInterval(function() {
+// Write a message in the info file indicating which player tags are being requested
+appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/unfiltered_battle_log_information.txt');
+
+var battleRequestInterval;
+var index = START_AT;
+var numRequestsMade = 0;
+
+function updateBattleRequestInterval(){
   index++;
   numRequestsMade++;
 
@@ -43,7 +53,9 @@ var battleRequestInterval = setInterval(function() {
     console.log("Complete.");
     clearInterval(battleRequestInterval);
   }
+}
 
+battleRequestInterval = setInterval(function() {
   axios({
     method: 'get',
     url: `https://api.brawlstars.com/v1/players/%23${playerTags[index]}/battlelog`,
@@ -59,11 +71,15 @@ var battleRequestInterval = setInterval(function() {
     appendTextToFile(convertedData.battles, './data/battles_unfiltered.txt');
     appendTextToFile(convertedData.info, './data/unfiltered_battle_log_information.txt');
 
-      
+    updateBattleRequestInterval();
+
   }).catch(error => {
-    console.log("ERROR");
-    console.error(error);
-    clearInterval(battleRequestInterval);
+    // console.error(error);
+    console.log('Error when requesting player at ' + index);
+    appendTextToFile('ERROR\n', './data/unfiltered_battle_log_information.txt');
+    updateBattleRequestInterval();
+
+    // clearInterval(battleRequestInterval);
   }); 
 }, MS_BETWEEN_REQUESTS);
 

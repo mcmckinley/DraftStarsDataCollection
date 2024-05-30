@@ -1,6 +1,10 @@
-// get_battles.js
+// get_one_battle.js
+// Michael McKinley
 
-// Requests the battle logs for all players within the player_tags file
+// ----
+// Requests a single battle and sends it to a local server.
+// This is used to make looking through API responses simpler.
+// ----
 
 // Run a local server with express
 const express = require('express');

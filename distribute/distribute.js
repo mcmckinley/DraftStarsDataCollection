@@ -1,20 +1,21 @@
 // distribute.js
 
-// Description:
-// - Takes data from data/battles_unfiltered.txt and seperates it into files, sorted by map and game mode.
+// ----
+// Takes data from data/battles_unfiltered.txt and seperates it into files, sorted by map and game mode.
+// ----
 
+// ----
 // How to use: 
 //  - delete existing filtered data
 //      $ rm -r data/battles/* 
 //  -  run:
-//      $ node filter/filter.js
+//      $ node distribute/distribute.js
+// ----
 
 const fs = require('fs');       // file i/o
 const path = require('path');   // formatting paths
 
-
 const pathToBattleLog = 'data/battles_unfiltered.txt';
-
 
 // Use this to mark time between two points.
 var startOfInterval = new Date();
