@@ -1,7 +1,7 @@
 // distribute.js
 
 // ----
-// Takes data from data/battles_unfiltered.txt and seperates it into files, sorted by map and game mode.
+// Takes data from data/battles.txt and seperates it into files, sorted by map and game mode.
 // ----
 
 // ----
@@ -15,7 +15,7 @@
 const fs = require('fs');       // file i/o
 const path = require('path');   // formatting paths
 
-const pathToBattleLog = 'data/battles_unfiltered.txt';
+const pathToBattleLog = 'data/battles.txt';
 
 // Use this to mark time between two points.
 var startOfInterval = new Date();
@@ -29,7 +29,7 @@ function printCheckpoint(message){
 }
 
 // clear the info file
-fs.writeFile('data/total_battles_logged.txt', '', (err) => {});
+fs.writeFile('data/battles_info.txt', '', (err) => {});
 
 fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
     if (err){
@@ -91,7 +91,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
 
     const mainDirectory = "data/battles";
 
-    // this is added to data/total_battles_logged.txt. this file tells you how many battles are logged for each map.
+    // this is added to data/battles_info.txt. this file tells you how many battles are logged for each map.
     var battleInfoText = '';
 
     // 3. Write the data to the files
@@ -112,16 +112,17 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
             for (map in modes[mode]){
                 if (modes[mode].hasOwnProperty(map)){
                     const file = path.join(subdirectory, map);
+
                     fs.writeFile(file, modes[mode][map].join(), (err) => {});
 
-                    var numberOfBattlesForMap = modes[mode][map].length;
+                    var numBattlesForMap = modes[mode][map].length;
 
-                    battleInfoText += ' - ' + map + ': ' + numberOfBattlesForMap + '\n';
+                    battleInfoText += ' - ' + map + ': ' + numBattlesForMap + '\n';
                 }
             }
         }
     }
-    appendTextToFile(battleInfoText, 'data/total_battles_logged.txt')
+    appendTextToFile(battleInfoText, 'data/battles_info.txt')
 })
 
 function appendTextToFile(data, file){

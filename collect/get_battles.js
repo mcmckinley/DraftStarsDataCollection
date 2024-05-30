@@ -29,17 +29,17 @@ const MS_BETWEEN_REQUESTS = 500; // milliseconds between requests
 
 
 if (SHOULD_RESET_FILE) {
-  fs.writeFile('./data/battles_unfiltered.txt', '', (err) => {
+  fs.writeFile('./data/battles.txt', '', (err) => {
     if (err) { console.log(err) }
   })
-  fs.writeFile('./data/unfiltered_battle_log_information.txt', '', (err) => {
+  fs.writeFile('./data/api_call_summary.txt', '', (err) => {
     if (err) { console.log(err) }
   })
   console.log('Dataset cleared.')
 }
 
 // Write a message in the info file indicating which player tags are being requested
-appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/unfiltered_battle_log_information.txt');
+appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/api_call_summary.txt');
 
 var battleRequestInterval;
 var index = START_AT;
@@ -68,15 +68,15 @@ battleRequestInterval = setInterval(function() {
     const playerTag = '#'+playerTags[index];
 
     var convertedData = convertBattleLogToData(response.data, playerTag);
-    appendTextToFile(convertedData.battles, './data/battles_unfiltered.txt');
-    appendTextToFile(convertedData.info, './data/unfiltered_battle_log_information.txt');
+    appendTextToFile(convertedData.battles, './data/battles.txt');
+    appendTextToFile(convertedData.info, './data/api_call_summary.txt');
 
     updateBattleRequestInterval();
 
   }).catch(error => {
     // console.error(error);
     console.log('Error when requesting player at ' + index);
-    appendTextToFile('ERROR\n', './data/unfiltered_battle_log_information.txt');
+    appendTextToFile('ERROR\n', './data/api_call_summary.txt');
     updateBattleRequestInterval();
 
     // clearInterval(battleRequestInterval);
