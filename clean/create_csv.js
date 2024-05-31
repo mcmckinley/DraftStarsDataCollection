@@ -180,7 +180,8 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     battleDataArray[getMapIndex(map) + brawlers.length * 2] = 1;
     battleDataArray[battleDataArray.length - 1] = (teamThatWon == 'right' ? 1 : 0);
 
-    allBattleArrays.push('"' + battleDataArray.join('","') + '"')
+    // Convert the entire array to a string
+    allBattleArrays.push(battleDataArray.join(','));
   }
 
   fs.appendFile('data/battles.csv', allBattleArrays.join('\n'), (err) => {
