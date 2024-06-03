@@ -23,9 +23,9 @@ const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !==
 // Modify the requests
 
 const SHOULD_RESET_FILE = false;
-const START_AT = 4010;              // the player tag index at which ti begin requesting 
-const NUM_REQUESTS_TO_MAKE = 1990;  // number of requests to make
-const MS_BETWEEN_REQUESTS = 500; // milliseconds between requests
+const START_AT = 0;                 // the player tag index at which to begin requesting 
+const NUM_REQUESTS_TO_MAKE = 6000;  // number of requests to make
+const MS_BETWEEN_REQUESTS = 500;    // milliseconds between requests
 
 
 if (SHOULD_RESET_FILE) {

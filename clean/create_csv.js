@@ -192,6 +192,8 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   })
   
   printCheckpoint('Wrote data to battles.csv');
+  console.log('CSV Successfully created.')
+  console.log('IMPORTANT: Number of inputs = ' + lengthOfDataArray)
 });
 
 function appendTextToFile(data, file){

@@ -39,3 +39,21 @@ epochs -> 500
 lr -> 0.03
 epochs -> 1000
 814/1496 correct - 0.5441176470588235
+
+battle log = 123K battles
+lr -> 0.001
+epochs = 2000
+
+
+epochs -> 100
+lr -> 0.1
+1397/2469 correct - 0.5658161198865937
+
+epochs -> 200
+1392/2469 correct - 0.5637910085054678
+
+6.3
+NEW INFO: Less epochs is better. There's already so much training data that it doesn't help to go back 
+Also, when I run inference using example battles that should have obvious outcomes, it confidently answers wrongly.
+    Could be some logic error that I made in my code.
+
