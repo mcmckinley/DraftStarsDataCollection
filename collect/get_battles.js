@@ -25,7 +25,7 @@ const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !==
 const SHOULD_RESET_FILE = false;
 const START_AT = 0;                 // the player tag index at which to begin requesting 
 const NUM_REQUESTS_TO_MAKE = 6000;  // number of requests to make
-const MS_BETWEEN_REQUESTS = 500;    // milliseconds between requests
+const MS_BETWEEN_REQUESTS = 400;    // milliseconds between requests
 
 
 if (SHOULD_RESET_FILE) {
@@ -159,7 +159,7 @@ function convertBattleLogToData(battlelog, playerTag) {
         }
       }
 
-      if (highestTrophies < 600) {
+      if (highestTrophies < 800) {
         continue;
       }
     }

@@ -28,16 +28,16 @@ app.get('/', (req, res) => {
     axios({
         method: 'get',
         //url: `https://api.brawlstars.com/v1/players/%23${playerTags[0]}/battlelog`,
-        url: `https://api.brawlstars.com/v1/players/%23YRURQRPUR/battlelog`,
+        url: `https://api.brawlstars.com/v1/players/%2328RPYCCCY/battlelog`,
         headers: {
             'Authorization': `Bearer ${API_KEY}`
         }
     })
     .then(response => {
         console.log("Successfully requested one battle")
-        console.log(response.data.items[3].battle.teams[0].length)
+        // console.log(response.data.items[3].battle.teams[0].length)
 
-        res.send(response.data.items[3])
+        res.send(response.data)
 
     }).catch(error => {
         console.log(error)

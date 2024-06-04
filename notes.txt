@@ -57,3 +57,49 @@ NEW INFO: Less epochs is better. There's already so much training data that it d
 Also, when I run inference using example battles that should have obvious outcomes, it confidently answers wrongly.
     Could be some logic error that I made in my code.
 
+6.4 - Version 2
+Created new neural network structure.
+The goal of this structure is to provide consistent results. An issue I discovered while testing was that if you swap the teams between
+left and right, the model answers differently than you would expect.
+What I did: 
+1. Split the left_team, right_team and map apart from each other
+2. Passed each team through a shared layer, which treats them the same
+3. Combine the map and the teams and push them through a combined layer
+4. Pass through one more auxiliary layer
+5. Output
+
+Immediately, it provides a better success rate than I was able to accomplish with a simpler structure:
+856/1496 correct - 0.5721925133689839
+
+This was with the following settings:
+team_neurons = 40, combined_neurons = 10, auxiliary_neurons = 10
+epochs = 100
+lr = 0.01
+
+
+Now, I want to experiment with different activation functions. Intuitively, ReLU doesn't make sense to me in this application. 
+It seems like negative values should be allowed. ChatGPT strongly advises usign some activation function, insisting that they
+are necessary 
+
+Next moves: 
+- Turn off ReLU, experiment with different activation functions
+- Add more layers
+- Edit existing layers
+
+VERSION 3
+Keeping everything the same as above, but using LeakyReLU, I get:
+820/1496 correct - 0.5481283422459893
+
+Going back to ReLU
+
+team_neurons = 80, combined_neurons = 40, auxiliary_neurons = 10
+803/1496 correct - 0.5367647058823529
+
+IMPORTANT NOTE:
+I have to clean the data. Two problems:
+    - If a game has two people on the same
+
+I MISSPELLED THE NAME MELODIE! I WROTE HER AS MELODY!
+So THOUSANDS of my battles contained garbage data, because MELODIE wasn't being written into the battle.
+
+Fixed battles.csv. Now using battles-6-4.csv

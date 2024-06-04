@@ -18,7 +18,7 @@ const fs = require("fs"); // file i/o
 
 
 // 1  - Arrays of brawlers and maps
-var brawlers = ['SHELLY', 'COLT', 'BULL', 'BROCK', 'RICO', 'SPIKE', 'BARLEY', 'JESSIE', 'NITA', 'DYNAMIKE', 'EL PRIMO', 'MORTIS', 'CROW', 'POCO', 'BO', 'PIPER', 'PAM', 'TARA', 'DARRYL', 'PENNY', 'FRANK', 'GENE', 'TICK', 'LEON', 'ROSA', 'CARL', 'BIBI', '8-BIT', 'SANDY', 'BEA', 'EMZ', 'MR. P', 'MAX', 'JACKY', 'GALE', 'NANI', 'SPROUT', 'SURGE', 'COLETTE', 'AMBER', 'LOU', 'BYRON', 'EDGAR', 'RUFFS', 'STU', 'BELLE', 'SQUEAK', 'GROM', 'BUZZ', 'GRIFF', 'ASH', 'MEG', 'LOLA', 'FANG', 'EVE', 'JANET', 'BONNIE', 'OTIS', 'SAM', 'GUS', 'BUSTER', 'CHESTER', 'GRAY', 'MANDY', 'R-T', 'WILLOW', 'MAISIE', 'HANK', 'CORDELIUS', 'DOUG', 'PEARL', 'CHUCK', 'CHARLIE', 'MICO', 'KIT', 'LARRY & LAWRIE', 'MELODY', 'ANGELO', 'DRACO', 'LILY']
+var brawlers = ['SHELLY', 'COLT', 'BULL', 'BROCK', 'RICO', 'SPIKE', 'BARLEY', 'JESSIE', 'NITA', 'DYNAMIKE', 'EL PRIMO', 'MORTIS', 'CROW', 'POCO', 'BO', 'PIPER', 'PAM', 'TARA', 'DARRYL', 'PENNY', 'FRANK', 'GENE', 'TICK', 'LEON', 'ROSA', 'CARL', 'BIBI', '8-BIT', 'SANDY', 'BEA', 'EMZ', 'MR. P', 'MAX', 'JACKY', 'GALE', 'NANI', 'SPROUT', 'SURGE', 'COLETTE', 'AMBER', 'LOU', 'BYRON', 'EDGAR', 'RUFFS', 'STU', 'BELLE', 'SQUEAK', 'GROM', 'BUZZ', 'GRIFF', 'ASH', 'MEG', 'LOLA', 'FANG', 'EVE', 'JANET', 'BONNIE', 'OTIS', 'SAM', 'GUS', 'BUSTER', 'CHESTER', 'GRAY', 'MANDY', 'R-T', 'WILLOW', 'MAISIE', 'HANK', 'CORDELIUS', 'DOUG', 'PEARL', 'CHUCK', 'CHARLIE', 'MICO', 'KIT', 'LARRY & LAWRIE', 'MELODIE', 'ANGELO', 'DRACO', 'LILY']
 var maps = []; 
 
 // 2 - Dictionaries of brawlers and maps
@@ -96,7 +96,7 @@ function printCheckpoint(message) {
   const endOfInterval = new Date();
   const durationOfInterval = ((endOfInterval - startOfInterval) / 1000).toFixed(3);
 
-  console.log(message, durationOfInterval, "s");
+  console.log(message + ' ' + durationOfInterval + 's');
   startOfInterval = endOfInterval;
 }
 
@@ -116,18 +116,17 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     console.error(err);
     return;
   }
-  printCheckpoint("File has been read");
+  printCheckpoint("File read");
 
   // 1. Organize the rougb data into an array.
   var allBattlesUnfiltered = turnDataToArray(data);
-  printCheckpoint("Data sorted into array");
+  printCheckpoint("Data sorted");
 
   // console.log(`${allBattlesUnfiltered.length} total battles`)
 
   // 2. Remove duplicates from the array.
   var allBattles = removeDuplicates(allBattlesUnfiltered);
   printCheckpoint("Removed duplicates");
-  console.log(` -> Found ${allBattles.length} unique battles`);
 
   // 3. Write the CSV header
   var fileHeader = '';
@@ -151,8 +150,11 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   const emptyDataArray = new Array(lengthOfDataArray).fill(0);
 
   var allBattleArrays = [];
+  var battlesWithDuplicateBrawlers = 0;
 
-  for (var i = 0; i < allBattles.length; i++) {
+  //for (var i = 0; i < allBattles.length; i++) {
+  for (var i = 15; i < 17; i++) {
+
     // 1. Boolean array
     const battle = allBattles[i];
 
@@ -170,17 +172,38 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     var teamThatWon =   battle[10];
     
     battleDataArray[getBrawlerIndex(leftBrawler1)] = 1;
-    battleDataArray[getBrawlerIndex(leftBrawler2)] = 1;
-    battleDataArray[getBrawlerIndex(leftBrawler3)] = 1;
+    // IGNORE MATCHES WITH DUPLICATE BRAWLERS.
+    if (battleDataArray[getBrawlerIndex(leftBrawler2)] == 0){
+      battleDataArray[getBrawlerIndex(leftBrawler2)] = 1;
+    } else {
+      battlesWithDuplicateBrawlers += 1;
+      continue;
+    }
+    if (battleDataArray[getBrawlerIndex(leftBrawler3)] == 0){
+        battleDataArray[getBrawlerIndex(leftBrawler3)] = 1;
+    } else {
+      battlesWithDuplicateBrawlers += 1;
+      continue;
+    }
 
     battleDataArray[getBrawlerIndex(rightBrawler1) + brawlers.length] = 1;
-    battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] = 1;
-    battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] = 1;
+
+    if (battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] == 0){
+        battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] = 1;
+    } else {
+      battlesWithDuplicateBrawlers += 1;
+      continue;
+    }
+    if (battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] == 0){
+        battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] = 1;    
+    } else {
+      battlesWithDuplicateBrawlers += 1;
+      continue;
+    }
 
     battleDataArray[getMapIndex(map) + brawlers.length * 2] = 1;
     battleDataArray[battleDataArray.length - 1] = (teamThatWon == 'right' ? 1 : 0);
 
-    // Convert the entire array to a string
     allBattleArrays.push(battleDataArray.join(','));
   }
 
@@ -191,8 +214,11 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     }
   })
   
-  printCheckpoint('Wrote data to battles.csv');
-  console.log('CSV Successfully created.')
+  printCheckpoint('battles.csv written');
+
+  console.log(` -> Found ${allBattles.length} unique battles`);
+  console.log(' -> Removed ' + battlesWithDuplicateBrawlers + ' battles with duplicate brawlers on same team')
+
   console.log('IMPORTANT: Number of inputs = ' + lengthOfDataArray)
 });
 
