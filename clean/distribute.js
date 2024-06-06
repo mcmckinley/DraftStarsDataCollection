@@ -28,6 +28,8 @@ function printCheckpoint(message){
     startOfInterval = endOfInterval;
 }
 
+var numberOfMaps = 0;
+
 // clear the info file
 fs.writeFile('data/battles_info.txt', '', (err) => {});
 
@@ -111,6 +113,8 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
 
             for (map in modes[mode]){
                 if (modes[mode].hasOwnProperty(map)){
+                    numberOfMaps += 1
+
                     const file = path.join(subdirectory, map);
 
                     fs.writeFile(file, modes[mode][map].join(), (err) => {});
@@ -123,6 +127,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
         }
     }
     appendTextToFile(battleInfoText, 'data/battles_info.txt')
+    console.log('Number of maps:', numberOfMaps)
 })
 
 function appendTextToFile(data, file){

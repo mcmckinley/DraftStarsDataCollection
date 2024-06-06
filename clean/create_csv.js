@@ -152,9 +152,7 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   var allBattleArrays = [];
   var battlesWithDuplicateBrawlers = 0;
 
-  //for (var i = 0; i < allBattles.length; i++) {
-  for (var i = 15; i < 17; i++) {
-
+for (var i = 0; i < allBattles.length; i++) {
     // 1. Boolean array
     const battle = allBattles[i];
 

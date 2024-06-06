@@ -22,10 +22,10 @@ const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !==
 
 // Modify the requests
 
-const SHOULD_RESET_FILE = false;
-const START_AT = 0;                 // the player tag index at which to begin requesting 
-const NUM_REQUESTS_TO_MAKE = 6000;  // number of requests to make
-const MS_BETWEEN_REQUESTS = 400;    // milliseconds between requests
+const SHOULD_RESET_FILE = true;
+const START_AT = 2000;                 // the player tag index at which to begin requesting 
+const NUM_REQUESTS_TO_MAKE = 10;  // number of requests to make
+const MS_BETWEEN_REQUESTS = 500;    // milliseconds between requests
 
 
 if (SHOULD_RESET_FILE) {
@@ -69,14 +69,14 @@ battleRequestInterval = setInterval(function() {
 
     var convertedData = convertBattleLogToData(response.data, playerTag);
     appendTextToFile(convertedData.battles, './data/battles.txt');
-    appendTextToFile(convertedData.info, './data/api_call_summary.txt');
+    appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
 
     updateBattleRequestInterval();
 
   }).catch(error => {
-    // console.error(error);
+    console.error(error);
     console.log('Error when requesting player at ' + index);
-    appendTextToFile('ERROR\n', './data/api_call_summary.txt');
+    // appendTextToFile('ERROR\n', './data/api_call_summary.txt');
     updateBattleRequestInterval();
 
     // clearInterval(battleRequestInterval);
@@ -91,12 +91,21 @@ battleRequestInterval = setInterval(function() {
 //  - battlelog:           a json object representing a player's battle log.
 //  - playerTag (string): the player tag of the person whose battle log we are requesting (used to identify duplicates)
 
-// returns an object with two keys:
-//  - battles (string):  
-//  - info (strings)
+// returns an object with three keys:
+//  - battles (string)
+//  - info (string)
+//  - message: array<string>
+
+// functionalities:
+//    - Assigns weights to each battle which indicate the statistical important of each battle.
+//          we expect high trophy players to beat low trophy players.
+//          thus, when a low trophy player beats a high trophy player, we consider that datapoint
+//          to be highly meaningful.
+
 
 function convertBattleLogToData(battlelog, playerTag) {
   var battles = [];
+  var messages = [];
 
   // the first or second match may have no star player, due to the nature of power league.
   //     we will have to skip these matches.
@@ -123,9 +132,9 @@ function convertBattleLogToData(battlelog, playerTag) {
       match.event.mode == "duoShowdown",
       match.event.mode == "duels",
       match.event.mode == "unknown",
-      matchType != "ranked" &&
-        matchType != "soloRanked" &&
-        matchType != "teamRanked",
+      matchType != "ranked", // &&
+      //  matchType != "soloRanked" &&      Because ranked modifiers produce such unpredictable outcomes, we must 
+      //  matchType != "teamRanked",        sadly disregard ranked games.
       !match.battle.mode,
       !match.event.map,
       match.battle.result == "draw",
@@ -135,6 +144,7 @@ function convertBattleLogToData(battlelog, playerTag) {
     //    this match is irrelevant to us.
     // Also, ignore any modes that aren't 3v3
     if (!match.battle.teams || match.battle.teams[0].length != 3) {
+      messages.push('    ' + i + ': teams undefined (5v5/duels)')
       continue;
     }
 
@@ -142,24 +152,36 @@ function convertBattleLogToData(battlelog, playerTag) {
     var fail = failConditions.some(condition => condition === true);
 
     if (fail) {
+      messages.push('    ' + i + ': invalid mode/map/match results')
       continue;
     }
 
 
-    // Ignore the match if it is too low trophies.
-    if (matchType == "ranked") {
-      var highestTrophies = 0;
-      for (var j = 0; j < 2; j++) {
-        for (var k = 0; k < 3; k++) {
-          const playerTrophies = match.battle.teams[j][k].brawler.trophies;
+    // Ignore the match if the difference in trophies between highest and lowest is too great.
+    const MAX_ACCEPTED_TROPHY_GAP = 60;
+    // Ignore the match if the max trophies is too low
+    const MIN_ACCEPTED_MAX_TROPHIES = 600; 
 
-          if (playerTrophies > highestTrophies) {
-            highestTrophies = playerTrophies;
-          }
+    if (matchType == "ranked") {
+      var leftTeam = match.battle.teams[0];
+      var rightTeam = match.battle.teams[1];
+      var leftTeamHighest = 0;
+      var rightTeamHighest = 0
+
+      for (var k = 0; k < 3; k++) {
+        if (leftTeamHighest < leftTeam[k].brawler.trophies) {
+          leftTeamHighest = leftTeam[k].brawler.trophies;
+        }
+        if (rightTeamHighest < rightTeam[k].brawler.trophies) {
+          rightTeamHighest  = rightTeam[k].brawler.trophies;
         }
       }
 
-      if (highestTrophies < 800) {
+      if (Math.abs(leftTeamHighest - rightTeamHighest) > MAX_ACCEPTED_TROPHY_GAP) {
+        messages.push('    ' + i + `: SKIP - trophy gap too great (${leftTeamHighest} - ${rightTeamHighest})`);
+        continue;
+      } else if (leftTeamHighest < MIN_ACCEPTED_MAX_TROPHIES || rightTeamHighest < MIN_ACCEPTED_MAX_TROPHIES) {
+        messages.push('    ' + i + `: SKIP - trophies too low (${leftTeamHighest} / ${rightTeamHighest})`);
         continue;
       }
     }
@@ -206,17 +228,20 @@ function convertBattleLogToData(battlelog, playerTag) {
         teamOnRightDidWin ? 'right' : 'left',   // 10 - whether left or right won.
       ].join(",")
     ); 
+    messages.push('    ' + i + ': ok')
   }
   
   if (battles.length == 0) {
     return {
       battles: '',
-      info: index + ' ' + playerTag + ': 0 battles\n'
+      info: index + ' ' + playerTag + ': 0 battles\n',
+      messages: messages
     };
   } else {
     return { 
       battles: battles.join('\n') + '\n',
-      info: index + ' ' + playerTag + ': ' + battles.length + ' battles\n'
+      info: index + ' ' + playerTag + ': ' + battles.length + ' battles\n',
+      messages: messages
     };
   }
 }

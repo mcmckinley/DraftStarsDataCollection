@@ -1,0 +1,8 @@
+1. create some variable which represents the gap in trophies between the teams. Disregard a match if the gap is too great.
+
+2. get_battles.js: give it an option to write to a file the details of its findings. Say when a battle is disregarded and why. 
+
+3. Actually go in and look at some inputs / outputs. Investigate confidence scores.
+
+4. Should each brawler have their completely OWN shared layer? For extremely accurate analysis?
+5. 
