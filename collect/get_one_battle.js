@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
     axios({
         method: 'get',
         //url: `https://api.brawlstars.com/v1/players/%23${playerTags[0]}/battlelog`,
-        url: `https://api.brawlstars.com/v1/players/%2328RPYCCCY/battlelog`,
+        url: `https://api.brawlstars.com/v1/players/%238JV0L9RU/battlelog`,
         headers: {
             'Authorization': `Bearer ${API_KEY}`
         }

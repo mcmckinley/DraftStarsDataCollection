@@ -22,9 +22,9 @@ const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !==
 
 // Modify the requests
 
-const SHOULD_RESET_FILE = true;
-const START_AT = 2000;                 // the player tag index at which to begin requesting 
-const NUM_REQUESTS_TO_MAKE = 10;  // number of requests to make
+const SHOULD_RESET_FILE = false;
+const START_AT = 5;                 // the player tag index at which to begin requesting 
+const NUM_REQUESTS_TO_MAKE = 5900;  // number of requests to make
 const MS_BETWEEN_REQUESTS = 500;    // milliseconds between requests
 
 
@@ -109,9 +109,8 @@ function convertBattleLogToData(battlelog, playerTag) {
 
   // the first or second match may have no star player, due to the nature of power league.
   //     we will have to skip these matches.
-  // note: this condition is activated more than intended: it is also triggered for modes with no star player like showdown, boss fight etc
+  // note: this condition is inadvertently activated for modes with no star player like showdown, boss fight etc
   //    however, this creates no problems because those modes are skipped anwyays.
-
   var startIndex = 0;
   if (battlelog.items[0].battle.starPlayer == null) {
     startIndex++;
@@ -158,7 +157,7 @@ function convertBattleLogToData(battlelog, playerTag) {
 
 
     // Ignore the match if the difference in trophies between highest and lowest is too great.
-    const MAX_ACCEPTED_TROPHY_GAP = 60;
+    const MAX_ACCEPTED_TROPHY_GAP = 250;
     // Ignore the match if the max trophies is too low
     const MIN_ACCEPTED_MAX_TROPHIES = 600; 
 
@@ -201,13 +200,7 @@ function convertBattleLogToData(battlelog, playerTag) {
     const playerDidWin = (match.battle.result == "victory");
     const playerIsOnRight = (teamOnRight[0].tag == playerTag || teamOnRight[1].tag == playerTag || teamOnRight[2].tag == playerTag);
 
-    var teamOnRightDidWin = (playerDidWin == playerIsOnRight);
-    
-   //  console.log(' - ', teamOnRight[0].tag, ' ', teamOnRight[1].tag, ' ', teamOnRight[2].tag);
-   //  console.log(' - ', teamOnRight[0].brawler.name, ' ', teamOnRight[1].brawler.name, ' ', teamOnRight[2].brawler.name);
-
-   //  console.log(' - ', playerIsOnRight ? 'right' : 'left');
-
+    const teamOnRightDidWin = (playerDidWin == playerIsOnRight);
 
     // Finally, add the battle to the battles array
     battles.push(
@@ -226,6 +219,16 @@ function convertBattleLogToData(battlelog, playerTag) {
         teamOnRight[2].brawler.name,
 
         teamOnRightDidWin ? 'right' : 'left',   // 10 - whether left or right won.
+
+        // the following bits of data are used by the model to calculate weights.
+        
+        teamOnLeft[0].brawler.trophies,    
+        teamOnLeft[1].brawler.trophies, 
+        teamOnLeft[2].brawler.trophies,
+
+        teamOnRight[0].brawler.trophies,
+        teamOnRight[1].brawler.trophies,
+        teamOnRight[2].brawler.trophies,
       ].join(",")
     ); 
     messages.push('    ' + i + ': ok')
@@ -246,7 +249,9 @@ function convertBattleLogToData(battlelog, playerTag) {
   }
 }
 
+function calculateMatchWeight () {
 
+}
 
 function appendTextToFile(data, file){
   fs.appendFile(file, data, 'utf8', (err) => {

@@ -119,13 +119,13 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   printCheckpoint("File read");
 
   // 1. Organize the rougb data into an array.
-  var allBattlesUnfiltered = turnDataToArray(data);
+  var battleListUnfiltered = turnDataToArray(data);
   printCheckpoint("Data sorted");
 
-  // console.log(`${allBattlesUnfiltered.length} total battles`)
+  // console.log(`${battleListUnfiltered.length} total battles`)
 
   // 2. Remove duplicates from the array.
-  var allBattles = removeDuplicates(allBattlesUnfiltered);
+  var battleList = removeDuplicates(battleListUnfiltered);
   printCheckpoint("Removed duplicates");
 
   // 3. Write the CSV header
@@ -142,19 +142,20 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   for (var i = 0; i < maps.length; i++){
     fileHeader += '"' + maps[i] + '",';
   }
-  fileHeader += '"DID TEAM ON RIGHT WIN?"\n';
+  fileHeader += '"DID TEAM ON RIGHT WIN?","left0","left1","left2","right0","right1","right2"\n';
   appendTextToFile(fileHeader, 'data/battles.csv');
 
   // initialize blank data array
-  const lengthOfDataArray = (brawlers.length * 2) + maps.length + 1;
+  const lengthOfDataArray = (brawlers.length * 2) + maps.length + 1 + 6;
   const emptyDataArray = new Array(lengthOfDataArray).fill(0);
 
   var allBattleArrays = [];
   var battlesWithDuplicateBrawlers = 0;
 
-for (var i = 0; i < allBattles.length; i++) {
+
+  for (var i = 0; i < battleList.length; i++) {
     // 1. Boolean array
-    const battle = allBattles[i];
+    const battle = battleList[i];
 
     var battleDataArray = emptyDataArray.slice();
 
@@ -168,9 +169,16 @@ for (var i = 0; i < allBattles.length; i++) {
     var rightBrawler3 = battle[9];
     var map = battle[3];
     var teamThatWon =   battle[10];
+    var left0 = battle[11];
+    var left1 = battle[12];
+    var left2 = battle[13];
+    var right0 = battle[14];
+    var right1 = battle[15];
+    var right2 = battle[16];
     
     battleDataArray[getBrawlerIndex(leftBrawler1)] = 1;
     // IGNORE MATCHES WITH DUPLICATE BRAWLERS.
+    // this is so ugly.. please make it a function
     if (battleDataArray[getBrawlerIndex(leftBrawler2)] == 0){
       battleDataArray[getBrawlerIndex(leftBrawler2)] = 1;
     } else {
@@ -199,8 +207,15 @@ for (var i = 0; i < allBattles.length; i++) {
       continue;
     }
 
-    battleDataArray[getMapIndex(map) + brawlers.length * 2] = 1;
-    battleDataArray[battleDataArray.length - 1] = (teamThatWon == 'right' ? 1 : 0);
+    battleDataArray[brawlers.length * 2 + getMapIndex(map)] = 1;  // set map
+    battleDataArray[brawlers.length * 2 + maps.length] = (teamThatWon == 'right' ? 1 : 0); // set who won
+
+    battleDataArray[brawlers.length * 2 + maps.length + 1] = left0; // trophies for each player
+    battleDataArray[brawlers.length * 2 + maps.length + 2] = left1;
+    battleDataArray[brawlers.length * 2 + maps.length + 3] = left2;
+    battleDataArray[brawlers.length * 2 + maps.length + 4] = right0;
+    battleDataArray[brawlers.length * 2 + maps.length + 5] = right1;
+    battleDataArray[brawlers.length * 2 + maps.length + 6] = right2;
 
     allBattleArrays.push(battleDataArray.join(','));
   }
@@ -214,10 +229,12 @@ for (var i = 0; i < allBattles.length; i++) {
   
   printCheckpoint('battles.csv written');
 
-  console.log(` -> Found ${allBattles.length} unique battles`);
+  console.log(` -> Found ${battleList.length} unique battles`);
   console.log(' -> Removed ' + battlesWithDuplicateBrawlers + ' battles with duplicate brawlers on same team')
 
-  console.log('IMPORTANT: Number of inputs = ' + lengthOfDataArray)
+  console.log('IMPORTANT: Number of inputs = ' + (lengthOfDataArray - 1 - 6))
+  console.log('           num brawlers:' +  brawlers.length * 2)
+  console.log('           num maps:' +  maps.length)
 });
 
 function appendTextToFile(data, file){
@@ -255,7 +272,7 @@ function turnDataToArray(data) {
     } else {
       currentArray.push(currentString);
       currentString = "";
-      if (currentArray.length == 11) {
+      if (currentArray.length == /*11*/ 17) {
         battleList.push(currentArray);
         currentArray = [];
       }

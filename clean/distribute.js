@@ -9,7 +9,7 @@
 //  - delete existing filtered data
 //      $ rm -r data/battles/* 
 //  -  run:
-//      $ node distribute/distribute.js
+//      $ node clean/distribute.js
 // ----
 
 const fs = require('fs');       // file i/o
@@ -65,6 +65,12 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
         var brawler5     = battle[8];
         var brawler6     = battle[9];
         var whichTeamWon = battle[10];
+        var left0        = battle[11];
+        var left1        = battle[12];
+        var left2        = battle[13];
+        var right0       = battle[14];
+        var right1       = battle[15];
+        var right2       = battle[16];
 
         // If a key hasn't been created for a given mode or map, then create it
         if (!modes[mode]){
@@ -164,7 +170,7 @@ function turnDataToArray(data) {
       } else {
         currentArray.push(currentString);
         currentString = '';
-        if (currentArray.length == 11) { 
+        if (currentArray.length == 17) { 
           battleList.push(currentArray);
           currentArray = [];
         }
