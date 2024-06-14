@@ -2,8 +2,8 @@
 // Michael McKinley
 
 // ----
-// Requests a single battle and sends it to a local server.
-// This is used to make looking through API responses simpler.
+// Requests a single battle and sends it to localhost.
+// This is useful for inspecting API responses.
 // ----
 
 // Run a local server with express

@@ -23,9 +23,9 @@ const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !==
 // Modify the requests
 
 const SHOULD_RESET_FILE = false;
-const START_AT = 5;                 // the player tag index at which to begin requesting 
-const NUM_REQUESTS_TO_MAKE = 5900;  // number of requests to make
-const MS_BETWEEN_REQUESTS = 500;    // milliseconds between requests
+const START_AT = 0;                 // the player tag index at which to begin requesting 
+const NUM_REQUESTS_TO_MAKE = 5950;  // number of requests to make
+const MS_BETWEEN_REQUESTS = 400;    // milliseconds between requests
 
 
 if (SHOULD_RESET_FILE) {
@@ -69,7 +69,7 @@ battleRequestInterval = setInterval(function() {
 
     var convertedData = convertBattleLogToData(response.data, playerTag);
     appendTextToFile(convertedData.battles, './data/battles.txt');
-    appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
+    //appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
 
     updateBattleRequestInterval();
 

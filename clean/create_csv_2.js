@@ -1,9 +1,9 @@
-// create_csv.js
+// create_csv_2.js
 // Michael McKinley
 
 // -----
-// This is version 1. It is interpretable for neural network.
-//
+// This is version 2. It is interpretable for a GPT.
+// Encodes a text file containing battles into a csv.
 // The objective of this program is to take the data we have and make it interpretable for a nueral network.
 // It creates a CSV file which pytorch can read.
 // -----
@@ -15,7 +15,6 @@
 
 
 const fs = require("fs"); // file i/o
-
 
 // I. Index functions
 
@@ -107,7 +106,7 @@ function printCheckpoint(message) {
 // III. Reading the datafile
 
 // 1. Clear the CSV file
-fs.writeFile('data/battles.csv', '', (err) => {
+fs.writeFile('data/battles_2.csv', '', (err) => {
   if (err) {
     console.error(err);
     return;
@@ -132,98 +131,48 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   printCheckpoint("Removed duplicates");
 
   // 3. Write the CSV header
-  var fileHeader = '';
-  // left brawlers
-  for (var i = 0; i < brawlers.length; i++){
-    fileHeader += '"' + brawlers[i] + '_LEFT",';
-  }
-  // right brawlers
-  for (var i = 0; i < brawlers.length; i++){
-    fileHeader += '"' + brawlers[i] + '_RIGHT",';
-  }
-  // maps
-  for (var i = 0; i < maps.length; i++){
-    fileHeader += '"' + maps[i] + '",';
-  }
-  fileHeader += '"DID TEAM ON RIGHT WIN?","left0","left1","left2","right0","right1","right2"\n';
-  appendTextToFile(fileHeader, 'data/battles.csv');
 
-  // initialize blank data array
-  const lengthOfDataArray = (brawlers.length * 2) + maps.length + 1 + 6;
-  const emptyDataArray = new Array(lengthOfDataArray).fill(0);
+  const csvHeader = '"map","a1","a2","a3","b1","b2","b3","did_team_b_win","a1_t","a2_t","a3_t","b1_t","b2_t","b3_t"\n';
+  appendTextToFile(csvHeader, 'data/battles_2.csv');
 
   var allBattleArrays = [];
   var battlesWithDuplicateBrawlers = 0;
 
-
-  for (var i = 0; i < battleList.length; i++) {
-    // 1. Boolean array
-    const battle = battleList[i];
-
-    var battleDataArray = emptyDataArray.slice();
+  for (const battle of battleList) {
+    var battleDataArray = [];
 
     // 2. Modfy the bool array: 1's where the value is true
 
-    var leftBrawler1 =  battle[4];
-    var leftBrawler2 =  battle[5];
-    var leftBrawler3 =  battle[6];
-    var rightBrawler1 = battle[7];
-    var rightBrawler2 = battle[8];
-    var rightBrawler3 = battle[9];
+    var a1 =  battle[4];
+    var a2 =  battle[5];
+    var a3 =  battle[6];
+    var b1 = battle[7];
+    var b2 = battle[8];
+    var b3 = battle[9];
     var map = battle[3];
-    var teamThatWon =   battle[10];
-    var left0 = battle[11];
-    var left1 = battle[12];
-    var left2 = battle[13];
-    var right0 = battle[14];
-    var right1 = battle[15];
-    var right2 = battle[16];
+    var teamThatWon = battle[10];
+    var a1_t = battle[11];
+    var a2_t = battle[12];
+    var a3_t = battle[13];
+    var b1_t = battle[14];
+    var b2_t = battle[15];
+    var b3_t = battle[16];
     
-    battleDataArray[getBrawlerIndex(leftBrawler1)] = 1;
-    // IGNORE MATCHES WITH DUPLICATE BRAWLERS.
-    // this is so ugly.. please make it a function
-    if (battleDataArray[getBrawlerIndex(leftBrawler2)] == 0){
-      battleDataArray[getBrawlerIndex(leftBrawler2)] = 1;
-    } else {
+    if (a1 == a2 || a1 == a3 || a2 == a3 || b1 == b2 || b1 == b3 || b2 == b3){
       battlesWithDuplicateBrawlers += 1;
       continue;
     }
-    if (battleDataArray[getBrawlerIndex(leftBrawler3)] == 0){
-        battleDataArray[getBrawlerIndex(leftBrawler3)] = 1;
-    } else {
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
+    
+    battleDataArray.push(
+      map, a1, a2, a3, b1, b2, b3,        // add map and brawler names
+      teamThatWon == 'right' ? 1 : 0,     // specify who won
+      a1_t, a2_t, a3_t, b1_t, b2_t, b3_t  // add trophy counts for each player
+    );
 
-    battleDataArray[getBrawlerIndex(rightBrawler1) + brawlers.length] = 1;
-
-    if (battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] == 0){
-        battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] = 1;
-    } else {
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
-    if (battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] == 0){
-        battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] = 1;    
-    } else {
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
-
-    battleDataArray[brawlers.length * 2 + getMapIndex(map)] = 1;  // set map
-    battleDataArray[brawlers.length * 2 + maps.length] = (teamThatWon == 'right' ? 1 : 0); // set who won
-
-    battleDataArray[brawlers.length * 2 + maps.length + 1] = left0; // trophies for each player
-    battleDataArray[brawlers.length * 2 + maps.length + 2] = left1;
-    battleDataArray[brawlers.length * 2 + maps.length + 3] = left2;
-    battleDataArray[brawlers.length * 2 + maps.length + 4] = right0;
-    battleDataArray[brawlers.length * 2 + maps.length + 5] = right1;
-    battleDataArray[brawlers.length * 2 + maps.length + 6] = right2;
-
-    allBattleArrays.push(battleDataArray.join(','));
+    allBattleArrays.push('"' + battleDataArray.join('","') + '"');
   }
 
-  fs.appendFile('data/battles.csv', allBattleArrays.join('\n'), (err) => {
+  fs.appendFile('data/battles_2.csv', allBattleArrays.join('\n'), (err) => {
     if (err) {
       console.error(err); 
       return;
@@ -233,9 +182,8 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   printCheckpoint('battles.csv written');
 
   console.log(` -> Found ${battleList.length} unique battles`);
-  console.log(' -> Removed ' + battlesWithDuplicateBrawlers + ' battles with duplicate brawlers on same team')
+  console.log(' -> Removed ' + battlesWithDuplicateBrawlers + ' battles with duplicate brawlers on same team (do we need this anymore?)')
 
-  console.log('IMPORTANT: Number of inputs = ' + (lengthOfDataArray - 1 - 6))
   console.log('           num brawlers:' +  brawlers.length * 2)
   console.log('           num maps:' +  maps.length)
 });
@@ -248,7 +196,6 @@ function appendTextToFile(data, file){
     }
   });
 }
-
 
 
 // takes a battle log (unfiltered string) and parses it into a 2d array.

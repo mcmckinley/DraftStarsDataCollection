@@ -123,7 +123,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
 
                     const file = path.join(subdirectory, map);
 
-                    fs.writeFile(file, modes[mode][map].join(), (err) => {});
+                    fs.writeFile(file, modes[mode][map].join('\n'), (err) => {});
 
                     var numBattlesForMap = modes[mode][map].length;
 
