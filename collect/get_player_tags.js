@@ -24,19 +24,23 @@ const fs = require('fs');
 
 // Array of club tags
 var clubTags = [];
-var playerTags = []
+
+// Array of player tags
+// We first take the existing player tags, add the new list of tags,
+// then remove duplicates. So we are essentially updating the list.
+var playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
 
 // MAX 6000
 const NUM_CLUBS_TO_REQUEST_FROM = 200;
 
 // Clear the player tag file
-fs.writeFile('./data/player_tags.json', '', (err) => {
-    if (err) {
-        console.log('Could not clear file.')
-    } else {
-        console.log('player_tags file reset.')
-    }
-})
+// fs.writeFile('./data/player_tags.json', '', (err) => {
+//     if (err) {
+//         console.log('Could not clear file.')
+//     } else {
+//         console.log('player_tags file reset.')
+//     }
+// })
 
 // 1: Request club leaderboard
 
@@ -84,7 +88,10 @@ axios({
         clubIndex++;        
         if (clubIndex == NUM_CLUBS_TO_REQUEST_FROM){
             clearInterval(intervalID);
+            
             // 4. Write the JSON data to the file
+            playerTags = [...new Set(playerTags)];
+
             var playerTagsJSON = JSON.stringify(playerTags)
 
             fs.appendFile('./data/player_tags.json', playerTagsJSON +'\n', (err) => {
