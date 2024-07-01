@@ -14,19 +14,15 @@ require('dotenv').config();
 const API_KEY = process.env.API_KEY;
 
 
-// Read the player tags file synchronously
-const unfilteredPlayerTags = fs.readFileSync('data/player_tags.txt', 'utf8');
-
-// Split the file contents into an array of player tags
-const playerTags = unfilteredPlayerTags.split('\n').filter(tag => tag.trim() !== '');
+// Get the player tags
+const playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
 
 // Modify the requests
 
-const SHOULD_RESET_FILE = false;
+const SHOULD_RESET_FILE = true;
 const START_AT = 0;                 // the player tag index at which to begin requesting 
-const NUM_REQUESTS_TO_MAKE = 5950;  // number of requests to make
+const NUM_REQUESTS_TO_MAKE = 1;  // number of requests to make
 const MS_BETWEEN_REQUESTS = 400;    // milliseconds between requests
-
 
 if (SHOULD_RESET_FILE) {
   fs.writeFile('./data/battles.txt', '', (err) => {
@@ -69,7 +65,7 @@ battleRequestInterval = setInterval(function() {
 
     var convertedData = convertBattleLogToData(response.data, playerTag);
     appendTextToFile(convertedData.battles, './data/battles.txt');
-    //appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
+    appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
 
     updateBattleRequestInterval();
 
@@ -196,6 +192,11 @@ function convertBattleLogToData(battlelog, playerTag) {
     // Determine wether or not the team on the right won
     const teamOnLeft = match.battle.teams[0];
     const teamOnRight = match.battle.teams[1];
+
+    if (i == 1){
+      console.log('team on left:')
+      console.log(teamOnLeft)
+    }
 
     const playerDidWin = (match.battle.result == "victory");
     const playerIsOnRight = (teamOnRight[0].tag == playerTag || teamOnRight[1].tag == playerTag || teamOnRight[2].tag == playerTag);

@@ -24,12 +24,13 @@ const fs = require('fs');
 
 // Array of club tags
 var clubTags = [];
+var playerTags = []
 
 // MAX 6000
 const NUM_CLUBS_TO_REQUEST_FROM = 200;
 
 // Clear the player tag file
-fs.writeFile('./data/player_tags.txt', '', (err) => {
+fs.writeFile('./data/player_tags.json', '', (err) => {
     if (err) {
         console.log('Could not clear file.')
     } else {
@@ -51,7 +52,7 @@ axios({
     // 2: Create array of club tags
     
     var leaderboard = response.data;
-    for (var j=0; j<200; j++){
+    for (var j = 0; j < 200; j++){
         clubTags.push(leaderboard.items[j].tag);
     }
     
@@ -73,12 +74,7 @@ axios({
             var data = response.data; 
             for (var i = 0; i < data.items.length; i++){
                 const tag = data.items[i].tag.slice(1);
-                
-                fs.appendFile('./data/player_tags.txt', tag +'\n', (err) => {
-                    if (err) {
-                        console.log('error adding tag to file');
-                    }
-                });
+                playerTags.push(tag)
             }
         })
         .catch(error => {
@@ -88,7 +84,16 @@ axios({
         clubIndex++;        
         if (clubIndex == NUM_CLUBS_TO_REQUEST_FROM){
             clearInterval(intervalID);
-            console.log('Success.');
+            // 4. Write the JSON data to the file
+            var playerTagsJSON = JSON.stringify(playerTags)
+
+            fs.appendFile('./data/player_tags.json', playerTagsJSON +'\n', (err) => {
+                if (err) {
+                    console.log('error adding tag to file');
+                }
+            });
+
+            console.log(`Added ${playerTags.length} player tags to data/player_tags.json`);
         }
     }, 500);
 })
