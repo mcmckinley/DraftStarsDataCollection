@@ -17,40 +17,54 @@ const API_KEY = process.env.API_KEY;
 // Get the player tags
 const playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
 
-// Modify the requests
 
+// Modify the requests
 const SHOULD_RESET_FILE = true;
 const START_AT = 0;                 // the player tag index at which to begin requesting 
-const NUM_REQUESTS_TO_MAKE = 1;  // number of requests to make
+const NUM_REQUESTS_TO_MAKE = 20;    // number of requests to make
 const MS_BETWEEN_REQUESTS = 400;    // milliseconds between requests
+const PATH_TO_BATTLES_FILE = 'data/battles.json'
+const REQUEST_BETWEEN_SAVING = 4;   // how frequently to save data to the file (in case of a crash/cancellation)
+
+// Important global variables
+var battleRequestInterval;          // timed loop which sends the requests
+var index = START_AT;               // index of the request
+var numRequestsMade = 0;            // number of requests made during this call session
+var allBattles = []                 // list containing data on all battles
 
 if (SHOULD_RESET_FILE) {
-  fs.writeFile('./data/battles.txt', '', (err) => {
-    if (err) { console.log(err) }
-  })
-  fs.writeFile('./data/api_call_summary.txt', '', (err) => {
-    if (err) { console.log(err) }
-  })
+  fs.writeFile(PATH_TO_BATTLES_FILE, '', (err) => {if (err) {console.log(err)}})
+  fs.writeFile('./data/api_call_summary.txt', '', (err) => {if (err) {console.log(err)}})
   console.log('Dataset cleared.')
+} else { 
+  // Pick up from where we last left off
+  allBattles = [...JSON.parse(fs.readFileSync(PATH_TO_BATTLES_FILE, 'utf8')), ...allBattles]
 }
 
 // Write a message in the info file indicating which player tags are being requested
 appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/api_call_summary.txt');
 
-var battleRequestInterval;
-var index = START_AT;
-var numRequestsMade = 0;
-
+// updateBattleRequestInterval
+// - Increment the index variables
+// - Periodically save the data
+// - Save the data upon completion
 function updateBattleRequestInterval(){
   index++;
   numRequestsMade++;
 
+  if (numRequestsMade % REQUEST_BETWEEN_SAVING == 0){
+    writeTextToFile(JSON.stringify(allBattles), PATH_TO_BATTLES_FILE)
+    console.log('Data saved @ index', index)
+  }
+
   if (numRequestsMade == NUM_REQUESTS_TO_MAKE) {
     console.log("Complete.");
     clearInterval(battleRequestInterval);
+    writeTextToFile(JSON.stringify(allBattles), PATH_TO_BATTLES_FILE)
   }
 }
 
+// Make the requests
 battleRequestInterval = setInterval(function() {
   axios({
     method: 'get',
@@ -60,26 +74,20 @@ battleRequestInterval = setInterval(function() {
     }
   })
   .then(response => {
-    //console.log(`${index}`);
     const playerTag = '#'+playerTags[index];
 
     var convertedData = convertBattleLogToData(response.data, playerTag);
-    appendTextToFile(convertedData.battles, './data/battles.txt');
+    allBattles.push(...convertedData.battles)
     appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
 
     updateBattleRequestInterval();
 
   }).catch(error => {
     console.error(error);
-    console.log('Error when requesting player at ' + index);
-    // appendTextToFile('ERROR\n', './data/api_call_summary.txt');
+    console.log('Error occured when requesting player at ' + index);
     updateBattleRequestInterval();
-
-    // clearInterval(battleRequestInterval);
   }); 
 }, MS_BETWEEN_REQUESTS);
-
-
 
 // CONVERT BATTLE LOG TO DATA
 
@@ -88,15 +96,9 @@ battleRequestInterval = setInterval(function() {
 //  - playerTag (string): the player tag of the person whose battle log we are requesting (used to identify duplicates)
 
 // returns an object with three keys:
-//  - battles (string)
+//  - battles (array of strings and numbers)
 //  - info (string)
 //  - message: array<string>
-
-// functionalities:
-//    - Assigns weights to each battle which indicate the statistical important of each battle.
-//          we expect high trophy players to beat low trophy players.
-//          thus, when a low trophy player beats a high trophy player, we consider that datapoint
-//          to be highly meaningful.
 
 
 function convertBattleLogToData(battlelog, playerTag) {
@@ -194,11 +196,6 @@ function convertBattleLogToData(battlelog, playerTag) {
     const teamOnLeft = match.battle.teams[0];
     const teamOnRight = match.battle.teams[1];
 
-    if (i == 1){
-      console.log('team on left:')
-      console.log(teamOnLeft)
-    }
-
     const playerDidWin = (match.battle.result == "victory");
     const playerIsOnRight = (teamOnRight[0].tag == playerTag || teamOnRight[1].tag == playerTag || teamOnRight[2].tag == playerTag);
 
@@ -231,7 +228,7 @@ function convertBattleLogToData(battlelog, playerTag) {
         teamOnRight[0].brawler.trophies,
         teamOnRight[1].brawler.trophies,
         teamOnRight[2].brawler.trophies,
-      ].join(",")
+      ]
     ); 
     messages.push('    ' + i + ': ok')
   }
@@ -244,19 +241,24 @@ function convertBattleLogToData(battlelog, playerTag) {
     };
   } else {
     return { 
-      battles: battles.join('\n') + '\n',
+      battles: battles,
       info: index + ' ' + playerTag + ': ' + battles.length + ' battles\n',
       messages: messages
     };
   }
 }
 
-function calculateMatchWeight () {
-
-}
-
 function appendTextToFile(data, file){
   fs.appendFile(file, data, 'utf8', (err) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+  });
+}
+
+function writeTextToFile(text, file){
+  fs.writeFile(file, text, 'utf8', (err) => {
     if (err) {
       console.error(err);
       return;

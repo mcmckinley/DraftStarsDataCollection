@@ -18,6 +18,14 @@ const path = require('path');   // formatting paths
 
 const pathToBattleLog = 'data/battles.txt';
 
+// battles that happen BEFORE this date will be ignored.
+// This is to account for updates and the differences between game versions.
+const cutoff = {
+    year: 2024,
+    month: 6, 
+    day: 25
+}
+
 // Use this to mark time between two points.
 var startOfInterval = new Date();
 
@@ -30,9 +38,10 @@ function printCheckpoint(message){
 }
 
 var numberOfMaps = 0;
+var numBattlesBeforeCutoffDate = 0;
 
 // clear the info file
-fs.writeFile('data/battles_info.txt', '', (err) => {});
+fs.writeFileSync('data/battles_info.txt', '', (err) => {});
 
 fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
     if (err){
@@ -51,6 +60,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
     var modes = {};
     
     for (var i = 0; i < allBattles.length; i++){
+    // for (var i = 0; i < 1; i++){
         const battle = allBattles[i];
 
         // I made it this way so that it is easy to debug and modify data.
@@ -72,6 +82,21 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
         var right0       = battle[14];
         var right1       = battle[15];
         var right2       = battle[16];
+
+        var year = gameTime.substring(0, 4)
+        var month = gameTime.substring(4, 6)
+        var day = gameTime.substring(6, 8)
+
+        year = Number(year)
+        month = Number(month)
+        day = Number(day)
+
+        // If a game took place before the most recent update, ignore it
+        gameHappensBeforeCutoff = year < cutoff.year || (year == cutoff.year && (month < cutoff.month || (month == cutoff.month && day < cutoff.day)))
+        if (gameHappensBeforeCutoff) {
+          numBattlesBeforeCutoffDate += 1
+          continue;
+        }
 
         // If a key hasn't been created for a given mode or map, then create it
         if (!modes[mode]){
@@ -133,6 +158,7 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
     }
     appendTextToFile(battleInfoText, 'data/battles_info.txt')
     console.log('Number of maps:', numberOfMaps)
+    console.log('Number of battles ignored due to cutoff date:', numBattlesBeforeCutoffDate)
 })
 
 function appendTextToFile(data, file){
@@ -156,7 +182,7 @@ function appendTextToFile(data, file){
 //       7, 8, 9 - the names of the brawlers on the right team
 //       10 - which team won  (left or right)
 
-
+const numDatapointsPerBattle = 17
 function turnDataToArray(data) {
     // 1. Read the raw data and produce arrays to represent it.
     var index = 0;
@@ -169,7 +195,7 @@ function turnDataToArray(data) {
       } else {
         currentArray.push(currentString);
         currentString = '';
-        if (currentArray.length == 17) { 
+        if (currentArray.length == numDatapointsPerBattle) { 
           battleList.push(currentArray);
           currentArray = [];
         }
@@ -178,14 +204,4 @@ function turnDataToArray(data) {
     }
     
     return battleList;
-}
-
-function removeEmptyArrays(array){
-    var newArray = [];
-    for (var a = 0; a < array.length; a++){
-      if (array[a].length > 0){
-        newArray.push(array[a]);
-      }
-    }
-    return newArray;
 }

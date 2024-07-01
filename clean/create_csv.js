@@ -2,87 +2,27 @@
 // Michael McKinley
 
 // -----
-// This is version 1. It is interpretable for neural network.
-//
-// The objective of this program is to take the data we have and make it interpretable for a nueral network.
-// It creates a CSV file which pytorch can read.
+// Reads data/battles.json and converts it into a csv file
+//    to be used as input to a pytorch neural network.
 // -----
-
-// BEFORE USING:
-// Make sure to run:
-//    $ node clean/distribute.js
-
-
 
 const fs = require("fs"); // file i/o
 
 
-// I. Index functions
 
 
-// 1  - Arrays of brawlers and maps
-var brawlers = ['SHELLY', 'COLT', 'BULL', 'BROCK', 'RICO', 'SPIKE', 'BARLEY', 'JESSIE', 'NITA', 'DYNAMIKE', 'EL PRIMO', 'MORTIS', 'CROW', 'POCO', 'BO', 'PIPER', 'PAM', 'TARA', 'DARRYL', 'PENNY', 'FRANK', 'GENE', 'TICK', 'LEON', 'ROSA', 'CARL', 'BIBI', '8-BIT', 'SANDY', 'BEA', 'EMZ', 'MR. P', 'MAX', 'JACKY', 'GALE', 'NANI', 'SPROUT', 'SURGE', 'COLETTE', 'AMBER', 'LOU', 'BYRON', 'EDGAR', 'RUFFS', 'STU', 'BELLE', 'SQUEAK', 'GROM', 'BUZZ', 'GRIFF', 'ASH', 'MEG', 'LOLA', 'FANG', 'EVE', 'JANET', 'BONNIE', 'OTIS', 'SAM', 'GUS', 'BUSTER', 'CHESTER', 'GRAY', 'MANDY', 'R-T', 'WILLOW', 'MAISIE', 'HANK', 'CORDELIUS', 'DOUG', 'PEARL', 'CHUCK', 'CHARLIE', 'MICO', 'KIT', 'LARRY & LAWRIE', 'MELODIE', 'ANGELO', 'DRACO', 'LILY']
-var maps = []; 
+// I. Helper functions and variables
 
-// 2 - Dictionaries of brawlers and maps
-var brawlerToIndex = {};
-var mapToIndex = {};
-
-// 3.1 - Populating the brawlers dictionary is easy
-brawlers.forEach((brawler, index) => {
-  brawlerToIndex[brawler] = index;
-});
-
-// 3.2 - Populating the maps dictionary is a little harder: we have to 
-//        read the maps in first. For this we use the battles_info file.
-fs.readFile("data/battles_info.txt", "utf8", (err, data) => {
-  if (err) {
-    console.error(err);
-    return;
-  }
-
-  var index = 0;
-  var currentString = "";
-
-  while (index < data.length) {
-    if (data[index] == "-") {         // find dash character
-      index += 2;                     // ignore the space that follows
-      while (data[index] != ":") {
-        currentString += data[index]; // add the string
-        index++;
-      }
-      maps.push(currentString);
-      currentString = '';
-    }
-    index++;
-  }
-
-  maps.forEach((map, index) => {
-    mapToIndex[map] = index;
-  });
-
-});
-
-// 4 - Index functions
-
-// input: (string) a brawler name, or a map name
-// return: (integer) the index in the final array (what the neural network takes as input) 
-//                   that the brawler or map corresponds to.
-function getBrawlerIndex(name) {
-  return brawlerToIndex[name];
+const cutoff = {
+  year: 2024,
+  month: 6, 
+  day: 25
 }
+numBattlesBeforeCutoffDate = 0;
 
-function getMapIndex(name) {
-  return mapToIndex[name];
-}
-
-
-// II. Helper functions
-
-
-// remove duplicates
-// Takes an array of string arrays
-// Removes duplicates and returns
+// removeDuplicates
+//    Input: array<array<string>>
+//    Return: the input array, free of duplicates
 function removeDuplicates(array) {
   const uniqueStrings = new Set(
     array.map((subArray) => JSON.stringify(subArray)),
@@ -90,21 +30,21 @@ function removeDuplicates(array) {
   return Array.from(uniqueStrings).map((str) => JSON.parse(str));
 }
 
-// print checkpoint
-// Marks how long it took to preform a specific action. 
-// Each time you printCheckpoint, it resets the timer.
+// printCheckpoint
+//    Input: message
+//    Output: prints the message along with the elapsed time since last checkpoint.
 var startOfInterval = new Date();
 
 function printCheckpoint(message) {
   const endOfInterval = new Date();
   const durationOfInterval = ((endOfInterval - startOfInterval) / 1000).toFixed(3);
 
-  console.log(message + ' ' + durationOfInterval + 's');
+  console.log(message + ' in ' + durationOfInterval + 's');
   startOfInterval = endOfInterval;
 }
 
 
-// III. Reading the datafile
+// II. Reading the datafile
 
 // 1. Clear the CSV file
 fs.writeFile('data/battles.csv', '', (err) => {
@@ -125,119 +65,62 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   var battleListUnfiltered = turnDataToArray(data);
   printCheckpoint("Data sorted");
 
-  // console.log(`${battleListUnfiltered.length} total battles`)
-
   // 2. Remove duplicates from the array.
   var battleList = removeDuplicates(battleListUnfiltered);
   printCheckpoint("Removed duplicates");
 
   // 3. Write the CSV header
-  var fileHeader = '';
-  // left brawlers
-  for (var i = 0; i < brawlers.length; i++){
-    fileHeader += '"' + brawlers[i] + '_LEFT",';
-  }
-  // right brawlers
-  for (var i = 0; i < brawlers.length; i++){
-    fileHeader += '"' + brawlers[i] + '_RIGHT",';
-  }
-  // maps
-  for (var i = 0; i < maps.length; i++){
-    fileHeader += '"' + maps[i] + '",';
-  }
-  fileHeader += '"DID TEAM ON RIGHT WIN?","left0","left1","left2","right0","right1","right2"\n';
-  appendTextToFile(fileHeader, 'data/battles.csv');
 
-  // initialize blank data array
-  const lengthOfDataArray = (brawlers.length * 2) + maps.length + 1 + 6;
-  const emptyDataArray = new Array(lengthOfDataArray).fill(0);
+  const csvHeader = '"map","a1","a2","a3","b1","b2","b3","did_team_b_win","a1_t","a2_t","a3_t","b1_t","b2_t","b3_t"\n';
+  appendTextToFile(csvHeader, 'data/battles.csv');
 
   var allBattleArrays = [];
-  var battlesWithDuplicateBrawlers = 0;
 
-
-  for (var i = 0; i < battleList.length; i++) {
-    // 1. Boolean array
-    const battle = battleList[i];
-
-    var battleDataArray = emptyDataArray.slice();
+  for (const battle of battleList) {
+    var battleDataArray = [];
 
     // 2. Modfy the bool array: 1's where the value is true
-
-    var leftBrawler1 =  battle[4];
-    var leftBrawler2 =  battle[5];
-    var leftBrawler3 =  battle[6];
-    var rightBrawler1 = battle[7];
-    var rightBrawler2 = battle[8];
-    var rightBrawler3 = battle[9];
+    var gameTime = battle[0];
+    var a1 =  battle[4];
+    var a2 =  battle[5];
+    var a3 =  battle[6];
+    var b1 = battle[7];
+    var b2 = battle[8];
+    var b3 = battle[9];
     var map = battle[3];
-    var teamThatWon =   battle[10];
-    var left0 = battle[11];
-    var left1 = battle[12];
-    var left2 = battle[13];
-    var right0 = battle[14];
-    var right1 = battle[15];
-    var right2 = battle[16];
+    var teamThatWon = battle[10];
+    var a1_t = battle[11];
+    var a2_t = battle[12];
+    var a3_t = battle[13];
+    var b1_t = battle[14];
+    var b2_t = battle[15];
+    var b3_t = battle[16];
+
+    // Ignore games that happen before the cutoff date (the game's most recent update)
+    var year = Number(gameTime.substring(0, 4))
+    var month = Number(gameTime.substring(4, 6))
+    var day = Number(gameTime.substring(6, 8))
+
+    gameHappensBeforeCutoff = year < cutoff.year || (year == cutoff.year && (month < cutoff.month || (month == cutoff.month && day < cutoff.day)))
+    if (gameHappensBeforeCutoff) {
+        numBattlesBeforeCutoffDate += 1
+        continue;
+    }
+
     
-    battleDataArray[getBrawlerIndex(leftBrawler1)] = 1;
-    // IGNORE MATCHES WITH DUPLICATE BRAWLERS.
-    // this is so ugly.. please make it a function
-    if (battleDataArray[getBrawlerIndex(leftBrawler2)] == 0){
-      battleDataArray[getBrawlerIndex(leftBrawler2)] = 1;
-    } else {
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
-    if (battleDataArray[getBrawlerIndex(leftBrawler3)] == 0){
-        battleDataArray[getBrawlerIndex(leftBrawler3)] = 1;
-    } else {
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
+    battleDataArray.push(
+      map, a1, a2, a3, b1, b2, b3,        // add map and brawler names
+      teamThatWon,                        // specify who won
+      a1_t, a2_t, a3_t, b1_t, b2_t, b3_t  // add trophy counts for each player
+    );
 
-    battleDataArray[getBrawlerIndex(rightBrawler1) + brawlers.length] = 1;
-
-    if (battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] == 0){
-        battleDataArray[getBrawlerIndex(rightBrawler2) + brawlers.length] = 1;
-    } else {
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
-    if (battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] == 0){
-        battleDataArray[getBrawlerIndex(rightBrawler3) + brawlers.length] = 1;    
-    } else {
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
-
-    battleDataArray[brawlers.length * 2 + getMapIndex(map)] = 1;  // set map
-    battleDataArray[brawlers.length * 2 + maps.length] = (teamThatWon == 'right' ? 1 : 0); // set who won
-
-    battleDataArray[brawlers.length * 2 + maps.length + 1] = left0; // trophies for each player
-    battleDataArray[brawlers.length * 2 + maps.length + 2] = left1;
-    battleDataArray[brawlers.length * 2 + maps.length + 3] = left2;
-    battleDataArray[brawlers.length * 2 + maps.length + 4] = right0;
-    battleDataArray[brawlers.length * 2 + maps.length + 5] = right1;
-    battleDataArray[brawlers.length * 2 + maps.length + 6] = right2;
-
-    allBattleArrays.push(battleDataArray.join(','));
+    allBattleArrays.push('"' + battleDataArray.join('","') + '"');
   }
 
-  fs.appendFile('data/battles.csv', allBattleArrays.join('\n'), (err) => {
-    if (err) {
-      console.error(err); 
-      return;
-    }
-  })
-  
-  printCheckpoint('battles.csv written');
+  appendTextToFile(allBattleArrays.join('\n'), 'data/battles.csv')
 
-  console.log(` -> Found ${battleList.length} unique battles`);
-  console.log(' -> Removed ' + battlesWithDuplicateBrawlers + ' battles with duplicate brawlers on same team')
-
-  console.log('IMPORTANT: Number of inputs = ' + (lengthOfDataArray - 1 - 6))
-  console.log('           num brawlers:' +  brawlers.length * 2)
-  console.log('           num maps:' +  maps.length)
+  console.log(numBattlesBeforeCutoffDate + ' battles removed due to cutoff date')
+  printCheckpoint(battleList.length - numBattlesBeforeCutoffDate + ' battles written to data/battles.csv');
 });
 
 function appendTextToFile(data, file){
@@ -248,7 +131,6 @@ function appendTextToFile(data, file){
     }
   });
 }
-
 
 
 // takes a battle log (unfiltered string) and parses it into a 2d array.
