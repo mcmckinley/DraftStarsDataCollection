@@ -2,6 +2,7 @@
 
 // ----
 // Takes data from data/battles.txt and seperates it into files, sorted by map and game mode.
+// Makes the data readable.
 // ----
 
 // ----
@@ -107,11 +108,9 @@ fs.readFile(pathToBattleLog, 'utf8', (err, data) => {
         if (modes.hasOwnProperty(mode)){
             const subdirectory = path.join(mainDirectory, mode);
             // if the directory doesn't exist, create one
-            fs.mkdir(subdirectory, (err) => {
-                if (err) {
-                    if (err.code != 'EEXIST') {
-                        console.error(err);
-                    }
+            fs.mkdirSync(subdirectory, (err) => {
+                if (err && err.code != 'EEXIST') {
+                    console.error(err);
                 }
             });
 

@@ -4,8 +4,6 @@
 // -----
 // This is version 2. It is interpretable for a GPT.
 // Encodes a text file containing battles into a csv.
-// The objective of this program is to take the data we have and make it interpretable for a nueral network.
-// It creates a CSV file which pytorch can read.
 // -----
 
 // BEFORE USING:
@@ -98,7 +96,7 @@ function printCheckpoint(message) {
   const endOfInterval = new Date();
   const durationOfInterval = ((endOfInterval - startOfInterval) / 1000).toFixed(3);
 
-  console.log(message + ' ' + durationOfInterval + 's');
+  console.log(message + ' in ' + durationOfInterval + 's');
   startOfInterval = endOfInterval;
 }
 
@@ -106,7 +104,7 @@ function printCheckpoint(message) {
 // III. Reading the datafile
 
 // 1. Clear the CSV file
-fs.writeFile('data/battles_2.csv', '', (err) => {
+fs.writeFile('data/battles.csv', '', (err) => {
   if (err) {
     console.error(err);
     return;
@@ -133,10 +131,9 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   // 3. Write the CSV header
 
   const csvHeader = '"map","a1","a2","a3","b1","b2","b3","did_team_b_win","a1_t","a2_t","a3_t","b1_t","b2_t","b3_t"\n';
-  appendTextToFile(csvHeader, 'data/battles_2.csv');
+  appendTextToFile(csvHeader, 'data/battles.csv');
 
   var allBattleArrays = [];
-  var battlesWithDuplicateBrawlers = 0;
 
   for (const battle of battleList) {
     var battleDataArray = [];
@@ -158,11 +155,6 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     var b2_t = battle[15];
     var b3_t = battle[16];
     
-    if (a1 == a2 || a1 == a3 || a2 == a3 || b1 == b2 || b1 == b3 || b2 == b3){
-      battlesWithDuplicateBrawlers += 1;
-      continue;
-    }
-    
     battleDataArray.push(
       map, a1, a2, a3, b1, b2, b3,        // add map and brawler names
       teamThatWon == 'right' ? 1 : 0,     // specify who won
@@ -172,20 +164,14 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
     allBattleArrays.push('"' + battleDataArray.join('","') + '"');
   }
 
-  fs.appendFile('data/battles_2.csv', allBattleArrays.join('\n'), (err) => {
+  fs.appendFile('data/battles.csv', allBattleArrays.join('\n'), (err) => {
     if (err) {
       console.error(err); 
       return;
     }
   })
   
-  printCheckpoint('battles.csv written');
-
-  console.log(` -> Found ${battleList.length} unique battles`);
-  console.log(' -> Removed ' + battlesWithDuplicateBrawlers + ' battles with duplicate brawlers on same team (do we need this anymore?)')
-
-  console.log('           num brawlers:' +  brawlers.length * 2)
-  console.log('           num maps:' +  maps.length)
+  printCheckpoint(battleList.length + ' battles written to data/battles.csv');
 });
 
 function appendTextToFile(data, file){

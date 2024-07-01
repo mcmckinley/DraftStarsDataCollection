@@ -128,7 +128,8 @@ function convertBattleLogToData(battlelog, playerTag) {
       match.event.mode == "duels",
       match.event.mode == "unknown",
       matchType != "ranked", // &&
-      //  matchType != "soloRanked" &&      Because ranked modifiers produce such unpredictable outcomes, we must 
+      //  matchType != "soloRanked" &&      Because ranked modifiers are so influential on match outcomes, and we do not
+      //                                    know which modifiers were in effect with any given match, we must 
       //  matchType != "teamRanked",        sadly disregard ranked games.
       !match.battle.mode,
       !match.event.map,
@@ -211,15 +212,15 @@ function convertBattleLogToData(battlelog, playerTag) {
         match.event.mode,               // 2 - game mode
         match.event.map,                // 3 - map
 
-        teamOnLeft[0].brawler.name,      // 4, 5, 6 - the names of the brawlers
-        teamOnLeft[1].brawler.name,      //           on the left team
-        teamOnLeft[2].brawler.name,
+        teamOnLeft[0].brawler.id - 16000000,      // 4, 5, 6 - the IDs of the brawlers
+        teamOnLeft[1].brawler.id - 16000000,      //           on the left team
+        teamOnLeft[2].brawler.id - 16000000,
 
-        teamOnRight[0].brawler.name,    // 7, 8, 9 - the names of the brawlers
-        teamOnRight[1].brawler.name,    //           on the right team
-        teamOnRight[2].brawler.name,
+        teamOnRight[0].brawler.id - 16000000,    // 7, 8, 9 - the IDs of the brawlers
+        teamOnRight[1].brawler.id - 16000000,    //           on the right team
+        teamOnRight[2].brawler.id - 16000000,
 
-        teamOnRightDidWin ? 'right' : 'left',   // 10 - whether left or right won.
+        teamOnRightDidWin ? 1 : 0,               // 10 - 1 if team on right won, 0 if left team won.
 
         // the following bits of data are used by the model to calculate weights.
         
