@@ -89,18 +89,16 @@ axios({
         if (clubIndex == NUM_CLUBS_TO_REQUEST_FROM){
             clearInterval(intervalID);
             
-            // 4. Write the JSON data to the file
+            // Remove duplicates
             playerTags = [...new Set(playerTags)];
-
+            // Convert to JSON
             var playerTagsJSON = JSON.stringify(playerTags)
-
-            fs.appendFile('./data/player_tags.json', playerTagsJSON +'\n', (err) => {
-                if (err) {
-                    console.log('error adding tag to file');
-                }
-            });
-
-            console.log(`Added ${playerTags.length} player tags to data/player_tags.json`);
+            // Clear the file
+            fs.writeFile('./data/player_tags.json', '', (err) => {if (err) {console.error(err);}});
+            // Write the data to the file
+            fs.appendFile('./data/player_tags.json', playerTagsJSON +'\n', (err) => {if (err) {console.error(err)}});
+            
+            console.log(`${playerTags.length} player tags saved to data/player_tags.json`);
         }
     }, 500);
 })

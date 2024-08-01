@@ -19,12 +19,12 @@ const playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
 
 
 // Modify the requests
-const SHOULD_RESET_FILE = true;
+// const SHOULD_RESET_FILE = false;
 const START_AT = 0;                 // the player tag index at which to begin requesting 
-const NUM_REQUESTS_TO_MAKE = 20;    // number of requests to make
-const MS_BETWEEN_REQUESTS = 400;    // milliseconds between requests
+const NUM_REQUESTS_TO_MAKE = playerTags.length - START_AT;    // number of requests to make
+var   timeBetweenRequests = 400;    // milliseconds between requests
 const PATH_TO_BATTLES_FILE = 'data/battles.json'
-const REQUEST_BETWEEN_SAVING = 4;   // how frequently to save data to the file (in case of a crash/cancellation)
+const REQUEST_BETWEEN_SAVING = 1000;   // how frequently to save data to the file (in case of a crash/cancellation)
 
 // Important global variables
 var battleRequestInterval;          // timed loop which sends the requests
@@ -32,14 +32,9 @@ var index = START_AT;               // index of the request
 var numRequestsMade = 0;            // number of requests made during this call session
 var allBattles = []                 // list containing data on all battles
 
-if (SHOULD_RESET_FILE) {
-  fs.writeFile(PATH_TO_BATTLES_FILE, '', (err) => {if (err) {console.log(err)}})
-  fs.writeFile('./data/api_call_summary.txt', '', (err) => {if (err) {console.log(err)}})
-  console.log('Dataset cleared.')
-} else { 
-  // Pick up from where we last left off
-  allBattles = [...JSON.parse(fs.readFileSync(PATH_TO_BATTLES_FILE, 'utf8')), ...allBattles]
-}
+
+allBattles = [...JSON.parse(fs.readFileSync(PATH_TO_BATTLES_FILE, 'utf8')), ...allBattles]
+
 
 // Write a message in the info file indicating which player tags are being requested
 appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/api_call_summary.txt');
@@ -64,6 +59,8 @@ function updateBattleRequestInterval(){
   }
 }
 
+
+
 // Make the requests
 battleRequestInterval = setInterval(function() {
   axios({
@@ -83,11 +80,18 @@ battleRequestInterval = setInterval(function() {
     updateBattleRequestInterval();
 
   }).catch(error => {
-    console.error(error);
+    //console.error(error);
     console.log('Error occured when requesting player at ' + index);
+    if (error.response && error.response.data && error.response.data.reason == 'notFound'){
+      console.log(`${index} not found`)
+    } else if (error.response && error.response.data && error.response.data.reason == 'API at maximum capacity, request throttled.'){
+      console.log(`${index} request throttled`)
+    } else {
+      console.error(error)
+    }
     updateBattleRequestInterval();
-  }); 
-}, MS_BETWEEN_REQUESTS);
+  });
+}, timeBetweenRequests);
 
 // CONVERT BATTLE LOG TO DATA
 
@@ -129,10 +133,8 @@ function convertBattleLogToData(battlelog, playerTag) {
       match.event.mode == "duoShowdown",
       match.event.mode == "duels",
       match.event.mode == "unknown",
-      matchType != "ranked", // &&
-      //  matchType != "soloRanked" &&      Because ranked modifiers are so influential on match outcomes, and we do not
-      //                                    know which modifiers were in effect with any given match, we must 
-      //  matchType != "teamRanked",        sadly disregard ranked games.
+      matchType != "ranked" &&    // Trophy ladder
+       matchType != "soloRanked", // Power League
       !match.battle.mode,
       !match.event.map,
       match.battle.result == "draw",
@@ -156,9 +158,9 @@ function convertBattleLogToData(battlelog, playerTag) {
 
 
     // Ignore the match if the difference in trophies between highest and lowest is too great.
-    const MAX_ACCEPTED_TROPHY_GAP = 250;
+    const MAX_ACCEPTED_TROPHY_GAP = 400;
     // Ignore the match if the max trophies is too low
-    const MIN_ACCEPTED_MAX_TROPHIES = 600; 
+    const MIN_ACCEPTED_MAX_TROPHIES = 500; 
 
     if (matchType == "ranked") {
       var leftTeam = match.battle.teams[0];

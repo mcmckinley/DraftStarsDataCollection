@@ -12,3 +12,8 @@ data/*.json
 data/battles/*
 
 response*
+
+clean.js
+stuff.js
+remove_mirrors.js
+brawlers.json

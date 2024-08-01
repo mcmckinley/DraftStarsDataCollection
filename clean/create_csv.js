@@ -8,15 +8,18 @@
 
 const fs = require("fs"); // file i/o
 
+const inputFile = 'data/battles.json'
+const outputFile = 'data/battles.csv'
 
 
-
+console.log('Input file:', inputFile)
+console.log('Output file:',outputFile)
 // I. Helper functions and variables
 
 const cutoff = {
   year: 2024,
-  month: 6, 
-  day: 25
+  month: 7, 
+  day: 1
 }
 numBattlesBeforeCutoffDate = 0;
 
@@ -39,7 +42,7 @@ function printCheckpoint(message) {
   const endOfInterval = new Date();
   const durationOfInterval = ((endOfInterval - startOfInterval) / 1000).toFixed(3);
 
-  console.log(message + ' in ' + durationOfInterval + 's');
+  console.log(message + ' - ' + durationOfInterval + 's');
   startOfInterval = endOfInterval;
 }
 
@@ -47,14 +50,14 @@ function printCheckpoint(message) {
 // II. Reading the datafile
 
 // 1. Clear the CSV file
-fs.writeFile('data/battles.csv', '', (err) => {
+fs.writeFile(outputFile, '', (err) => {
   if (err) {
     console.error(err);
     return;
   }
 });
 
-fs.readFile("data/battles.txt", "utf8", (err, data) => {
+fs.readFile(inputFile, "utf8", (err, data) => {
   if (err) {
     console.error(err);
     return;
@@ -62,23 +65,22 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
   printCheckpoint("File read");
 
   // 1. Organize the rougb data into an array.
-  var battleListUnfiltered = turnDataToArray(data);
+  var battleListUnfiltered = JSON.parse(data)
   printCheckpoint("Data sorted");
 
   // 2. Remove duplicates from the array.
   var battleList = removeDuplicates(battleListUnfiltered);
-  printCheckpoint("Removed duplicates");
+  printCheckpoint(`Removed ${battleListUnfiltered.length - battleList.length} duplicates`);
 
   // 3. Write the CSV header
 
   const csvHeader = '"map","a1","a2","a3","b1","b2","b3","did_team_b_win","a1_t","a2_t","a3_t","b1_t","b2_t","b3_t"\n';
-  appendTextToFile(csvHeader, 'data/battles.csv');
+  appendTextToFile(csvHeader, outputFile);
 
   var allBattleArrays = [];
 
   for (const battle of battleList) {
-    var battleDataArray = [];
-
+    
     // 2. Modfy the bool array: 1's where the value is true
     var gameTime = battle[0];
     var a1 =  battle[4];
@@ -106,21 +108,20 @@ fs.readFile("data/battles.txt", "utf8", (err, data) => {
         numBattlesBeforeCutoffDate += 1
         continue;
     }
-
     
-    battleDataArray.push(
+    const battleDataArray = [
       map, a1, a2, a3, b1, b2, b3,        // add map and brawler names
       teamThatWon,                        // specify who won
       a1_t, a2_t, a3_t, b1_t, b2_t, b3_t  // add trophy counts for each player
-    );
+    ];
 
     allBattleArrays.push('"' + battleDataArray.join('","') + '"');
   }
 
-  appendTextToFile(allBattleArrays.join('\n'), 'data/battles.csv')
+  appendTextToFile(allBattleArrays.join('\n'), outputFile)
 
-  console.log(numBattlesBeforeCutoffDate + ' battles removed due to cutoff date')
-  printCheckpoint(battleList.length - numBattlesBeforeCutoffDate + ' battles written to data/battles.csv');
+  console.log(numBattlesBeforeCutoffDate + ' battles removed due to cutoff date: ' + cutoff.month + '/' + cutoff.day + '/' + cutoff.year)
+  printCheckpoint(battleList.length - numBattlesBeforeCutoffDate + ' battles written to ' + outputFile);
 });
 
 function appendTextToFile(data, file){
@@ -132,38 +133,3 @@ function appendTextToFile(data, file){
   });
 }
 
-
-// takes a battle log (unfiltered string) and parses it into a 2d array.
-// this function returns battleList (array of string arrays), where each index is a battle.
-
-//  each battle (array of strings) contains the following values at each index:
-//       0 - the battle time
-//       1 - the star player's id
-//       2 - game mode
-//       3 - map
-//       4, 5, 6 - the names of the brawlers on the left team
-//       7, 8, 9 - the names of the brawlers on the right team
-//       10 - which team won  (left or right)
-
-function turnDataToArray(data) {
-  // 1. Read the raw data and produce arrays to represent it.
-  var index = 0;
-  var currentString = "";
-  var currentArray = [];
-  var battleList = [];
-  while (index < data.length) {
-    if (data[index] != "," && data[index] != "\n") {
-      currentString += data[index];
-    } else {
-      currentArray.push(currentString);
-      currentString = "";
-      if (currentArray.length == /*11*/ 17) {
-        battleList.push(currentArray);
-        currentArray = [];
-      }
-    }
-    index++;
-  }
-
-  return battleList;
-}
