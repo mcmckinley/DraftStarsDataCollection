@@ -5,15 +5,13 @@ package-lock.json
 package.json
 
 # ignore the datafiles due to large sizes
-data/*.txt
-data/*.csv
-data/*.json
-
-data/battles/*
+data/*
 
 response*
 
+# Misc debugging tools
 clean.js
 stuff.js
 remove_mirrors.js
 brawlers.json
+create_mini_dataset.js

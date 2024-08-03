@@ -14,30 +14,56 @@ require('dotenv').config();
 const API_KEY = process.env.API_KEY;
 
 
-// Get the player tags
+// INFORMATION
+
+// allDatasetInfo: an array of objects stored in data/datasets/info.json. This contains information on each dataset.
+var allDatasetsInfo = JSON.parse(fs.readFileSync('data/datasets/info.json', 'utf8'))
+
+// playerTags: an array of player tags stored in data/player_tags.json. 
 const playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
 
 
-// Modify the requests
 // const SHOULD_RESET_FILE = false;
 const START_AT = 0;                 // the player tag index at which to begin requesting 
 const NUM_REQUESTS_TO_MAKE = playerTags.length - START_AT;    // number of requests to make
 var   timeBetweenRequests = 400;    // milliseconds between requests
-const PATH_TO_BATTLES_FILE = 'data/battles.json'
-const REQUEST_BETWEEN_SAVING = 1000;   // how frequently to save data to the file (in case of a crash/cancellation)
+const REQUEST_BETWEEN_SAVING = 500;   // how frequently to save data to the file (in case of a crash/cancellation)
 
 // Important global variables
 var battleRequestInterval;          // timed loop which sends the requests
 var index = START_AT;               // index of the request
 var numRequestsMade = 0;            // number of requests made during this call session
-var allBattles = []                 // list containing data on all battles
-
-
-allBattles = [...JSON.parse(fs.readFileSync(PATH_TO_BATTLES_FILE, 'utf8')), ...allBattles]
-
+var battles = []                 // list containing data on all battles
 
 // Write a message in the info file indicating which player tags are being requested
-appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/api_call_summary.txt');
+// appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/api_call_summary.txt');
+
+// INFO FILE
+
+// Create a unique file name. This keeps the dataset seperated across multiple files.
+// This means if corrupted data is collected, it does not affect other healthy datasets. 
+function getTimeOfCollection() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+}
+const TIME_OF_COLLECTION = getTimeOfCollection()
+const PATH_TO_BATTLES_FILE = 'data/datasets/' + TIME_OF_COLLECTION;
+
+// Create a file with the given name.
+writeTextToFile('', PATH_TO_BATTLES_FILE)
+
+// This will be modified.
+allDatasetsInfo.push({
+  filename: PATH_TO_BATTLES_FILE,
+  timeOfCollection: TIME_OF_COLLECTION,
+  indexOfFirstPlayerTag: START_AT
+})
 
 // updateBattleRequestInterval
 // - Increment the index variables
@@ -48,14 +74,28 @@ function updateBattleRequestInterval(){
   numRequestsMade++;
 
   if (numRequestsMade % REQUEST_BETWEEN_SAVING == 0){
-    writeTextToFile(JSON.stringify(allBattles), PATH_TO_BATTLES_FILE)
+    writeTextToFile(JSON.stringify(battles), PATH_TO_BATTLES_FILE)
+
+
+    info = allDatasetsInfo.pop()
+    info['numberOfBattles'] = numRequestsMade
+    allDatasetsInfo.push(info)
+    writeTextToFile(JSON.stringify(allDatasetsInfo), 'data/datasets/info.json')
+    
     console.log('Data saved @ index', index)
   }
 
   if (numRequestsMade == NUM_REQUESTS_TO_MAKE) {
-    console.log("Complete.");
     clearInterval(battleRequestInterval);
-    writeTextToFile(JSON.stringify(allBattles), PATH_TO_BATTLES_FILE)
+    writeTextToFile(JSON.stringify(battles), PATH_TO_BATTLES_FILE)
+
+
+    info = allDatasetsInfo.pop()
+    info['numberOfBattles'] = numRequestsMade
+    allDatasetsInfo.push(info)
+    writeTextToFile(JSON.stringify(allDatasetsInfo), 'data/datasets/info.json')
+
+    console.log("Complete.");
   }
 }
 
@@ -74,7 +114,7 @@ battleRequestInterval = setInterval(function() {
     const playerTag = '#'+playerTags[index];
 
     var convertedData = convertBattleLogToData(response.data, playerTag);
-    allBattles.push(...convertedData.battles)
+    battles.push(...convertedData.battles)
     appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
 
     updateBattleRequestInterval();
@@ -133,8 +173,9 @@ function convertBattleLogToData(battlelog, playerTag) {
       match.event.mode == "duoShowdown",
       match.event.mode == "duels",
       match.event.mode == "unknown",
-      matchType != "ranked" &&    // Trophy ladder
-       matchType != "soloRanked", // Power League
+      match.event.mode == "paintBrawl",
+      matchType != "ranked",   // Trophy ladder
+      //  matchType != "soloRanked", // Power League
       !match.battle.mode,
       !match.event.map,
       match.battle.result == "draw",
