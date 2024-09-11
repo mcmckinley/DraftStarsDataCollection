@@ -2,17 +2,16 @@
 // Michael McKinley
 
 // -----
-// Reads data/battles.json and converts it into a csv file
-//    to be used as input to a pytorch neural network.
+// Reads data/input-datasets/battles.json and converts it into a csv file.
 // -----
 
-const fs = require("fs"); // file i/o
+const fs = require("fs");
 
 
 // I. Helper functions and variables
 
 
-const outputFile = 'data/battles.csv'
+const outputFile = 'data/output-datasets/battles.csv'
 
 // Battles collected ON or BEFORE this date will be ignored.
 const cutoff = {

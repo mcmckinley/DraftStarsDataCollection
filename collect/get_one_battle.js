@@ -6,15 +6,18 @@
 // Useful for inspecting API responses.
 // ----
 
+// The unique ID of the player we are requesting 
+const TAG_TO_REQUEST = 'RQPCRGGGQ'
+
 require('dotenv').config();
 const API_KEY = process.env.API_KEY;
+
 const axios = require('axios');
 
-const playerTag = 'RQPCRGGGQ'
 
 axios({
     method: 'get',
-    url: `https://api.brawlstars.com/v1/players/%23${playerTag}/battlelog`,
+    url: `https://api.brawlstars.com/v1/players/%23${TAG_TO_REQUEST}/battlelog`,
     headers: {
         'Authorization': `Bearer ${API_KEY}`
     }

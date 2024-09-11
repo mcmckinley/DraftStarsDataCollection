@@ -3,30 +3,44 @@
 
 // ----
 // Collects a list of battles.
-// Requires the data/player_tags.txt file to be populated by collect/get_battles.txt
+// Requires the data/metadata/player_tags.json file to be populated by collect/get_player_tags.js
 // ----
+
+
 
 const axios = require('axios'); // API calls
 const fs = require('fs');       // File reading
 
-// .env to keep API key private
 require('dotenv').config();
 const API_KEY = process.env.API_KEY;
 
 
-// INFORMATION
+// I. Import data
 
-// allDatasetInfo: an array of objects stored in data/datasets/info.json. This contains information on each dataset.
-var allDatasetsInfo = JSON.parse(fs.readFileSync('data/metadata/info.json', 'utf8'))
 
 // playerTags: an array of player tags stored in data/player_tags.json. 
-const playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
+const playerTags = JSON.parse(fs.readFileSync('data/input-datasets/player_tags.json', 'utf8'))
+
+// datasetMetadataArray: an array of objects stored in data/metadata/info.json. This contains information on each dataset.
+// It is useful for getting an overview of what a dataset contains
+var datasetMetadataArray;
+
+try {
+    const data = fs.readFileSync('data/metadata/info.json', 'utf8')
+    datasetMetadataArray = data.trim() ? JSON.parse(data) : [];
+} catch (err) {
+    console.log('Could not find data/metadata/info.json; will create new one')
+    datasetMetadataArray = [];
+}
 
 
-const START_AT = 0;                    // the player tag index at which to begin requesting 
-const NUM_REQUESTS_TO_MAKE = playerTags.length - START_AT;    // number of requests to make
-var   timeBetweenRequests = 400;       // milliseconds between requests
-const REQUEST_BETWEEN_SAVING = 500;    // how frequently to save data to the file (in case of a crash/cancellation)
+// II. Define user config variables
+
+
+const START_AT = 0;                     // the player tag index at which to begin requesting 
+var   timeBetweenRequests = 400;        // milliseconds between requests
+const REQUEST_BETWEEN_SAVING = 10;       // how frequently to save data to the file (in case of a crash/cancellation)
+const NUM_REQUESTS_TO_MAKE = playerTags.length - START_AT;    //  set this to playerTags.length - START_AT to collect all
 
 // Important global variables
 var battleRequestInterval;          // timed loop which sends the requests
@@ -35,8 +49,8 @@ var numRequestsMade = 0;            // number of requests made during this call 
 var battles = []                    // list containing all collected battles
 
 
+// III. Prepare dataset file
 
-// INFO FILE
 
 // Create a unique file name. This keeps the dataset seperated across multiple files.
 // This means if corrupted data is collected, it does not affect other healthy datasets. 
@@ -51,17 +65,21 @@ function getTimeOfCollection() {
   return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }
 const TIME_OF_COLLECTION = getTimeOfCollection()
-const PATH_TO_BATTLES_FILE = 'data/datasets/' + TIME_OF_COLLECTION + '.json';
+const PATH_TO_BATTLES_FILE = 'data/input-datasets/' + TIME_OF_COLLECTION + '.json';
 
 // Create a file with the given name.
 writeTextToFile('', PATH_TO_BATTLES_FILE)
 
 // This will be modified.
-allDatasetsInfo.push({
+datasetMetadataArray.push({
   filename: PATH_TO_BATTLES_FILE,
   timeOfCollection: TIME_OF_COLLECTION,
   indexOfFirstPlayerTag: START_AT
 })
+
+
+// IV. Other helper functions
+
 
 // updateBattleRequestInterval; called at each interval of the timed loop
 // - Increment the index variables
@@ -74,10 +92,10 @@ function updateBattleRequestInterval(){
   if (numRequestsMade % REQUEST_BETWEEN_SAVING == 0){
     writeTextToFile(JSON.stringify(battles), PATH_TO_BATTLES_FILE)
 
-    info = allDatasetsInfo.pop()
+    info = datasetMetadataArray.pop()
     info['numberOfBattles'] = numRequestsMade
-    allDatasetsInfo.push(info)
-    writeTextToFile(JSON.stringify(allDatasetsInfo), 'data/datasets/info.json')
+    datasetMetadataArray.push(info)
+    writeTextToFile(JSON.stringify(datasetMetadataArray), 'data/metadata/info.json')
     
     console.log('Data saved @ index', index)
   }
@@ -86,10 +104,10 @@ function updateBattleRequestInterval(){
     clearInterval(battleRequestInterval);
     writeTextToFile(JSON.stringify(battles), PATH_TO_BATTLES_FILE)
 
-    info = allDatasetsInfo.pop()
+    info = datasetMetadataArray.pop()
     info['numberOfBattles'] = numRequestsMade
-    allDatasetsInfo.push(info)
-    writeTextToFile(JSON.stringify(allDatasetsInfo), 'data/datasets/info.json')
+    datasetMetadataArray.push(info)
+    writeTextToFile(JSON.stringify(datasetMetadataArray), 'data/metadata/info.json')
 
     console.log("Complete.");
   }
@@ -111,6 +129,9 @@ function printErrorMessage(error) {
 }
 
 
+// V. Requesting the battles
+
+
 console.log(`Starting at index ${START_AT}`)
 
 // Make the requests
@@ -130,17 +151,19 @@ battleRequestInterval = setInterval(function() {
     battles.push(...convertedData.battles)
 
     // Write a message to api_call_summary.txt indicating the success of this response
-    appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
+    appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/output-datasets/api_call_summary.txt');
 
     updateBattleRequestInterval();
   }).catch(error => {
-    printErrorMessage()
+    printErrorMessage(); 
     updateBattleRequestInterval();
   });
 }, timeBetweenRequests);
 
 
-// CONVERT BATTLE LOG TO DATA
+
+// VI. Converting the battle log to data
+
 
 // arguments:
 //  - battlelog:           a json object representing a player's battle log.
