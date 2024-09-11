@@ -34,3 +34,25 @@ node collect/get_battles.js
 ```
 node clean/csv.js
 ```
+
+# Screenshots
+
+1. Requesting player tags:
+
+<img src="images/player_tags.png"></img>
+
+2. Requesting battles:
+
+<img src="images/get_battles.png"></img>
+
+3. Metadata:
+
+<img src="images/metadata.png"></img>
+
+4. Writing CSV:
+
+<img src="images/clean.png"></img>
+
+5. CSV Ouput:
+
+<img src="images/csv.png"></img>
