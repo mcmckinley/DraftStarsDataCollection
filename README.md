@@ -1,13 +1,11 @@
 # Draft Stars Data Collection
-### Michael McKinley
-Summer 2024
 
-This program collects and parses data from Brawl Stars matches. The data is used to train the Draft Stars AI model.
+This program collects and parses data from Brawl Stars matches.
 
-The program does the following:
-    - Collect a list of player tags (collect/get_player_tags.js)
-    - Request battle logs (info on the 25 most recent games) of the players specified above (collect/get_battles.js)
-    - Create a CSV file to be interpreted by the AI model (clean/csv.js)
+Its functionalities include:
+* Collecting a list of player tags (collect/get_player_tags.js)
+* Requesting battle logs of the players specified above (collect/get_battles.js)
+* Converting the data to CSV (clean/csv.js)
 
 # How to use:
 
