@@ -15,20 +15,24 @@ The program does the following:
 
 Go to https://developer.brawlstars.com/#/, create an account and generate an API key.
 
-Add the API key into the `.env` file. It should look like API_KEY="123abc". 
+Add the API key into the `.env-example` file, and rename the file to `.env`.
 
+2. Install packages
+```
+npm install
+```
 
-2. Collect player tags
+3. Collect player tags
 ```
 node collect/get_player_tags.js
 ```
 
-3. Collect battle data
+4. Collect battle data
 ```
 node collect/get_battles.js
 ```
 
-4. Convert the data from JSON to CSV
+5. Convert the data from JSON to CSV
 ```
 node clean/csv.js
 ```

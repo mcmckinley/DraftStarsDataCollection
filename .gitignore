@@ -1,16 +1,16 @@
 .env
 node_modules
 
-package-lock.json
-package.json
-
 # ignore the files but not the directories
 data/*.*
-data/datasets/*
-data/battles/*
+
+!data/input-datasets
+!data/output-datasets
+
+data/input-datasets/*
+data/output-datasets/*
 data/metadata/*
 
-response*
 
 # Misc debugging tools
 clean.js
