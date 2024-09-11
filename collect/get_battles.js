@@ -17,26 +17,24 @@ const API_KEY = process.env.API_KEY;
 // INFORMATION
 
 // allDatasetInfo: an array of objects stored in data/datasets/info.json. This contains information on each dataset.
-var allDatasetsInfo = JSON.parse(fs.readFileSync('data/datasets/info.json', 'utf8'))
+var allDatasetsInfo = JSON.parse(fs.readFileSync('data/metadata/info.json', 'utf8'))
 
 // playerTags: an array of player tags stored in data/player_tags.json. 
 const playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
 
 
-// const SHOULD_RESET_FILE = false;
-const START_AT = 0;                 // the player tag index at which to begin requesting 
+const START_AT = 0;                    // the player tag index at which to begin requesting 
 const NUM_REQUESTS_TO_MAKE = playerTags.length - START_AT;    // number of requests to make
-var   timeBetweenRequests = 400;    // milliseconds between requests
-const REQUEST_BETWEEN_SAVING = 500;   // how frequently to save data to the file (in case of a crash/cancellation)
+var   timeBetweenRequests = 400;       // milliseconds between requests
+const REQUEST_BETWEEN_SAVING = 500;    // how frequently to save data to the file (in case of a crash/cancellation)
 
 // Important global variables
 var battleRequestInterval;          // timed loop which sends the requests
-var index = START_AT;               // index of the request
+var index = START_AT;               // index of the request, this increments
 var numRequestsMade = 0;            // number of requests made during this call session
-var battles = []                 // list containing data on all battles
+var battles = []                    // list containing all collected battles
 
-// Write a message in the info file indicating which player tags are being requested
-// appendTextToFile('* player tags ' + START_AT + ' - ' + (START_AT + NUM_REQUESTS_TO_MAKE) + '\n', './data/api_call_summary.txt');
+
 
 // INFO FILE
 
@@ -53,7 +51,7 @@ function getTimeOfCollection() {
   return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }
 const TIME_OF_COLLECTION = getTimeOfCollection()
-const PATH_TO_BATTLES_FILE = 'data/datasets/' + TIME_OF_COLLECTION;
+const PATH_TO_BATTLES_FILE = 'data/datasets/' + TIME_OF_COLLECTION + '.json';
 
 // Create a file with the given name.
 writeTextToFile('', PATH_TO_BATTLES_FILE)
@@ -65,7 +63,7 @@ allDatasetsInfo.push({
   indexOfFirstPlayerTag: START_AT
 })
 
-// updateBattleRequestInterval
+// updateBattleRequestInterval; called at each interval of the timed loop
 // - Increment the index variables
 // - Periodically save the data
 // - Save the data upon completion
@@ -97,6 +95,21 @@ function updateBattleRequestInterval(){
   }
 }
 
+function printErrorMessage(error) {
+  if (error.response && error.response.data && error.response.data.reason == 'notFound'){
+    console.log(`${index} not found`)
+  } else if (error.response && error.response.data && error.response.data.reason == 'requestThrottled'){
+    console.log(`${index} request throttled`)
+  } else if (error.code == 'ETIMEDOUT') {
+    console.log(`${index} timed out`)
+  } else if (error.code == 'ECONNRESET') {
+    console.log(`${index} ECONNRESET`)
+  } else {
+    console.log('Error occured when requesting player at ' + index);
+    console.error(error)
+  }
+}
+
 
 console.log(`Starting at index ${START_AT}`)
 
@@ -112,30 +125,20 @@ battleRequestInterval = setInterval(function() {
   .then(response => {
     const playerTag = '#'+playerTags[index];
 
+    // Parse the JSON object into a clean battle log
     var convertedData = convertBattleLogToData(response.data, playerTag);
     battles.push(...convertedData.battles)
+
+    // Write a message to api_call_summary.txt indicating the success of this response
     appendTextToFile(convertedData.info + convertedData.messages.join('\n') + '\n', './data/api_call_summary.txt');
 
     updateBattleRequestInterval();
-
   }).catch(error => {
-    //console.error(error);
-    
-    if (error.response && error.response.data && error.response.data.reason == 'notFound'){
-      console.log(`${index} not found`)
-    } else if (error.response && error.response.data && error.response.data.reason == 'requestThrottled'){
-      console.log(`${index} request throttled`)
-    } else if (error.code == 'ETIMEDOUT') {
-      console.log(`${index} timed out`)
-    } else if (error.code == 'ECONNRESET') {
-      console.log(`${index} ECONNRESET`)
-    } else {
-      console.log('Error occured when requesting player at ' + index);
-      console.error(error)
-    }
+    printErrorMessage()
     updateBattleRequestInterval();
   });
 }, timeBetweenRequests);
+
 
 // CONVERT BATTLE LOG TO DATA
 
@@ -147,8 +150,6 @@ battleRequestInterval = setInterval(function() {
 //  - battles (array of strings and numbers)
 //  - info (string)
 //  - message: array<string>
-
-
 function convertBattleLogToData(battlelog, playerTag) {
   var battles = [];
   var messages = [];
@@ -267,7 +268,7 @@ function convertBattleLogToData(battlelog, playerTag) {
 
         teamOnRightDidWin ? 1 : 0,               // 10 - 1 if team on right won, 0 if left team won.
 
-        // the following bits of data are used by the model to calculate weights.
+        // the following peices of data are used by the model to calculate weights.
         
         teamOnLeft[0].brawler.trophies,    
         teamOnLeft[1].brawler.trophies, 

@@ -1,5 +1,13 @@
-// create_csv.js
+// clean/old_csv.js
 // Michael McKinley
+
+
+// This is outdated. Please use clean/csv.js instead.
+
+// This is not updated to work with the new distributed file system.
+// It worked when all battles were added to a single file.
+// Now battles are distributed across multiple files. 
+
 
 // -----
 // Reads data/battles.json and converts it into a csv file

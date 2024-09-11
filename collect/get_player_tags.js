@@ -1,16 +1,16 @@
-// collect/player_tags.js
+// collect/get_player_tags.js
 // Michael McKinley
 
 // ----
 //  Creates a list of player tags.
-//  a) requests the club leaderboard (tags of top 200 clubs)
-//  b) requests member lists from all clubs (200 clubs * 30 players == 6000 players)
+//      a) requests the club leaderboard (tags of top 200 clubs)
+//      b) requests member lists from all clubs (200 clubs * ~30 players == ~6000 players)
 //  ----
 
+// Don't set this above 200
+const NUM_CLUBS_TO_REQUEST_FROM = 200;
+const MS_BETWEEN_REQUESTS = 200;
 
-// Run a local server with express
-const express = require('express');
-const app = express();
 
 // Use .env to keep api key private
 require('dotenv').config();
@@ -30,19 +30,9 @@ var clubTags = [];
 // then remove duplicates. So we are essentially updating the list.
 var playerTags = JSON.parse(fs.readFileSync('data/player_tags.json', 'utf8'))
 
-// MAX 6000
-const NUM_CLUBS_TO_REQUEST_FROM = 200;
-
-// Clear the player tag file
-// fs.writeFile('./data/player_tags.json', '', (err) => {
-//     if (err) {
-//         console.log('Could not clear file.')
-//     } else {
-//         console.log('player_tags file reset.')
-//     }
-// })
 
 // 1: Request club leaderboard
+
 
 axios({
     method: 'get',
@@ -100,7 +90,7 @@ axios({
             
             console.log(`${playerTags.length} player tags saved to data/player_tags.json`);
         }
-    }, 500);
+    }, MS_BETWEEN_REQUESTS);
 })
 .catch(error => {
     console.log(error);

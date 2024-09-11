@@ -51,7 +51,7 @@ function printCheckpoint(message) {
 // The info file contains the paths to each dataset.
 // Read each path to get the battles, and append it to battleListUnfiltered
 
-info = JSON.parse(fs.readFileSync('data/datasets/info.json'));
+info = JSON.parse(fs.readFileSync('data/metadata/info.json'));
 battleListUnfiltered = []
 for (dataset of info){
   const timeOfCollection = dataset.timeOfCollection

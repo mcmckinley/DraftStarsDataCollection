@@ -1,8 +1,8 @@
-# Brawl Stars Data Collection
+# Draft Stars Data Collection
 ### Michael McKinley
 Summer 2024
 
-This program collects and parses data from Brawl Stars matches. The data will be used to train an AI model whose goal is to predict the outcome of matches in Brawl Stars.
+This program collects and parses data from Brawl Stars matches. The data is used to train the Draft Stars AI model.
 
 The program does the following:
     - Collect a list of player tags (collect/get_player_tags.js)
@@ -13,7 +13,7 @@ The program does the following:
 
 1. Create an API key
 
-Go to https://developer.brawlstars.com/#/, create an account and an API key.
+Go to https://developer.brawlstars.com/#/, create an account and generate an API key.
 
 Add the API key into the `.env` file. It should look like API_KEY="123abc". 
 

@@ -4,10 +4,11 @@ node_modules
 package-lock.json
 package.json
 
-# ignore the datafiles due to large sizes
+# ignore the files but not the directories
 data/*.*
 data/datasets/*
 data/battles/*
+data/metadata/*
 
 response*
 
