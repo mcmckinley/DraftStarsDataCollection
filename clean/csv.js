@@ -14,10 +14,11 @@ const fs = require("fs"); // file i/o
 
 const outputFile = 'data/battles.csv'
 
+// Battles collected ON or BEFORE this date will be ignored.
 const cutoff = {
   year: 2024,
-  month: 7, 
-  day: 1
+  month: 8, 
+  day: 29
 }
 numBattlesBeforeCutoffDate = 0;
 
@@ -53,18 +54,26 @@ function printCheckpoint(message) {
 info = JSON.parse(fs.readFileSync('data/datasets/info.json'));
 battleListUnfiltered = []
 for (dataset of info){
+  const timeOfCollection = dataset.timeOfCollection
+  // Ignore games that happen before the cutoff date (the game's most recent update)
+  var year = Number(timeOfCollection.substring(0, 4))
+  var month = Number(timeOfCollection.substring(5, 7))
+  var day = Number(timeOfCollection.substring(8, 10))
+  if (year < cutoff.year || (year == cutoff.year && (month < cutoff.month || (month == cutoff.month && day < cutoff.day)))) {
+      continue;
+  }
+
   battles = JSON.parse(fs.readFileSync(dataset['filename']))
   battleListUnfiltered = battleListUnfiltered.concat(battles)
 }
 
-printCheckpoint(`Files have been read, found ${battleListUnfiltered.length} battles`);
+printCheckpoint(`${battleListUnfiltered.length} battles found`);
 
 
 // III. Remove duplicates
 
-
 var battleList = removeDuplicates(battleListUnfiltered);
-printCheckpoint(`Removed ${battleListUnfiltered.length - battleList.length} duplicates`);
+printCheckpoint(`${battleListUnfiltered.length - battleList.length} duplicates removed`);
 
 
 // IV. Convert the battles to strings

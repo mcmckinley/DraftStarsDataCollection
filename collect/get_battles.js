@@ -76,7 +76,6 @@ function updateBattleRequestInterval(){
   if (numRequestsMade % REQUEST_BETWEEN_SAVING == 0){
     writeTextToFile(JSON.stringify(battles), PATH_TO_BATTLES_FILE)
 
-
     info = allDatasetsInfo.pop()
     info['numberOfBattles'] = numRequestsMade
     allDatasetsInfo.push(info)
@@ -89,7 +88,6 @@ function updateBattleRequestInterval(){
     clearInterval(battleRequestInterval);
     writeTextToFile(JSON.stringify(battles), PATH_TO_BATTLES_FILE)
 
-
     info = allDatasetsInfo.pop()
     info['numberOfBattles'] = numRequestsMade
     allDatasetsInfo.push(info)
@@ -100,6 +98,7 @@ function updateBattleRequestInterval(){
 }
 
 
+console.log(`Starting at index ${START_AT}`)
 
 // Make the requests
 battleRequestInterval = setInterval(function() {
@@ -121,12 +120,17 @@ battleRequestInterval = setInterval(function() {
 
   }).catch(error => {
     //console.error(error);
-    console.log('Error occured when requesting player at ' + index);
+    
     if (error.response && error.response.data && error.response.data.reason == 'notFound'){
       console.log(`${index} not found`)
-    } else if (error.response && error.response.data && error.response.data.reason == 'API at maximum capacity, request throttled.'){
+    } else if (error.response && error.response.data && error.response.data.reason == 'requestThrottled'){
       console.log(`${index} request throttled`)
+    } else if (error.code == 'ETIMEDOUT') {
+      console.log(`${index} timed out`)
+    } else if (error.code == 'ECONNRESET') {
+      console.log(`${index} ECONNRESET`)
     } else {
+      console.log('Error occured when requesting player at ' + index);
       console.error(error)
     }
     updateBattleRequestInterval();
@@ -171,6 +175,7 @@ function convertBattleLogToData(battlelog, playerTag) {
     var failConditions = [
       match.event.mode == "soloShowdown",
       match.event.mode == "duoShowdown",
+      match.event.mode == "trioShowdown",
       match.event.mode == "duels",
       match.event.mode == "unknown",
       match.event.mode == "paintBrawl",

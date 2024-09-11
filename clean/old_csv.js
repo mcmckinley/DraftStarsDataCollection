@@ -16,10 +16,11 @@ console.log('Input file:', inputFile)
 console.log('Output file:',outputFile)
 // I. Helper functions and variables
 
+// battles ON or BEFORE this date will be ignored.
 const cutoff = {
   year: 2024,
-  month: 7, 
-  day: 1
+  month: 8, 
+  day: 29
 }
 numBattlesBeforeCutoffDate = 0;
 

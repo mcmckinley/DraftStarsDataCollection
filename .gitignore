@@ -5,7 +5,9 @@ package-lock.json
 package.json
 
 # ignore the datafiles due to large sizes
-data/*
+data/*.*
+data/datasets/*
+data/battles/*
 
 response*
 
@@ -15,3 +17,5 @@ stuff.js
 remove_mirrors.js
 brawlers.json
 create_mini_dataset.js
+
+.DS_Store

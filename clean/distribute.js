@@ -1,5 +1,10 @@
 // distribute.js
 
+
+// This is not updated to work with the new distributed file system.
+// It worked on the original system, which added every battle to a single file.
+// Now battles are distributed accross multiple files. Updating won't be difficult.
+
 // ----
 // Takes data from data/battles.txt and seperates it into files, sorted by map and game mode.
 // Makes the data readable.
