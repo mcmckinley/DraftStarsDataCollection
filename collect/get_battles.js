@@ -269,9 +269,9 @@ function convertBattleLogToData(battlelog, playerTag) {
     const teamOnRight = match.battle.teams[1];
 
     const playerDidWin = (match.battle.result == "victory");
-    const playerIsOnRight = (teamOnRight[0].tag == playerTag || teamOnRight[1].tag == playerTag || teamOnRight[2].tag == playerTag);
+    const playerIsOnLeft = (teamOnLeft[0].tag == playerTag || teamOnLeft[1].tag == playerTag || teamOnLeft[2].tag == playerTag);
 
-    const teamOnRightDidWin = (playerDidWin == playerIsOnRight);
+    const teamOnLeftDidWin = playerDidWin == playerIsOnLeft;
 
     // Finally, add the battle to the battles array
     battles.push(
@@ -289,7 +289,7 @@ function convertBattleLogToData(battlelog, playerTag) {
         teamOnRight[1].brawler.id - 16000000,    //           on the right team
         teamOnRight[2].brawler.id - 16000000,
 
-        teamOnRightDidWin ? 1 : 0,               // 10 - 1 if team on right won, 0 if left team won.
+        teamOnLeftDidWin ? 1 : 0,               // 10 - 1 if team on left won, 0 if right team won.
 
         // the following peices of data are used by the model to calculate weights.
         

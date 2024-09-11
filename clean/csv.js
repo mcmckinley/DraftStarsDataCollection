@@ -82,20 +82,20 @@ var allBattleStrings = [];
 for (const battle of battleList) {
   // 2. Modfy the bool array: 1's where the value is true
   var gameTime = battle[0];
-  var a1 =  battle[4];
+  var a1 =  battle[4]; 
   var a2 =  battle[5];
   var a3 =  battle[6];
   var b1 = battle[7];
   var b2 = battle[8];
   var b3 = battle[9];
   var map = battle[3];
-  var teamThatWon = battle[10] == 1 ? 0 : 1; // flip it for the model
-  var a1_t = battle[11];
-  var a2_t = battle[12];
-  var a3_t = battle[13];
-  var b1_t = battle[14];
-  var b2_t = battle[15];
-  var b3_t = battle[16];
+  var didTeamOnLeftWin = battle[10]; // flip it for the model
+  var a1_trophies = battle[11];
+  var a2_trophies = battle[12];
+  var a3_trophies = battle[13];
+  var b1_trophies = battle[14];
+  var b2_trophies = battle[15];
+  var b3_trophies = battle[16];
 
   // Ignore games that happen before the cutoff date (the game's most recent update)
   var year = Number(gameTime.substring(0, 4))
@@ -110,8 +110,8 @@ for (const battle of battleList) {
     
   const battleDataArray = [
     map, a1, a2, a3, b1, b2, b3,        // add map and brawler names
-    teamThatWon,                        // specify who won
-    a1_t, a2_t, a3_t, b1_t, b2_t, b3_t  // add trophy counts for each player
+    didTeamOnLeftWin,                        // specify who won
+    a1_trophies, a2_trophies, a3_trophies, b1_trophies, b2_trophies, b3_trophies  // add trophy counts for each player
   ];
 
   // Turn the battle into a string
@@ -122,7 +122,7 @@ for (const battle of battleList) {
 // V. Write the data to the file
 
 
-const csvHeader = '"map","a1","a2","a3","b1","b2","b3","did_blue_team_win","a1_t","a2_t","a3_t","b1_t","b2_t","b3_t"\n';
+const csvHeader = '"map","a1","a2","a3","b1","b2","b3","did_team_on_left_win","a1_trophies","a2_t","a3_trophies","b1_trophies","b2_trophies","b3_trophies"\n';
 
 fs.writeFileSync(outputFile, csvHeader + allBattleStrings.join('\n'))
 
